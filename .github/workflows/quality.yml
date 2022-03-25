@@ -1,0 +1,58 @@
+name: Quality Checks
+
+on:
+  pull_request:
+    types: [ ready_for_review, opened, synchronize, reopened ]
+    branches:
+      - main
+      - staging
+      - develop
+
+jobs:
+  lint:
+    if: github.event.pull_request.draft == false
+    name: Quality
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+      cancel-in-progress: true
+    steps:
+      - name: Setup PHP with tools
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.1
+          tools: composer
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Configure composer
+        run: composer config github-oauth.github.com ${{ secrets.COMPOSER_AUTH }}
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --no-scripts
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
+      - name: Run code sniffer
+        run: composer sniff
+
+      - name: Run mess detector
+        run: composer php-md
+
+      - name: Run static analyser
+        run: composer phpstan
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: Logs
+          path: ./storage/logs

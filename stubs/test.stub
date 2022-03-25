@@ -1,0 +1,19 @@
+<?php
+
+namespace {{ namespace }};
+
+use Tests\Feature\TestCase;
+use App\Models\User;
+
+class {{ class }} extends TestCase
+{
+    /** @test */
+    public function itShould(): void
+    {
+        /** @var User $user */
+        $user = User::factory()->createOne();
+        $this->actingAs($user);
+
+        //
+    }
+}

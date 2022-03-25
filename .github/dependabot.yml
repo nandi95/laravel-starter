@@ -1,0 +1,28 @@
+version: 2
+updates:
+
+- package-ecosystem: php
+  directory: '/'
+  target-branch: main
+  schedule:
+    interval: weekly
+    day: 'monday'
+    time: '00:00'
+  open-pull-requests-limit: 5
+  commit-message:
+    prefix: fix
+    prefix-development: chore
+    include: scope
+
+
+- package-ecosystem: github-actions
+  directory: '/'
+  target-branch: main
+  schedule:
+    interval: weekly
+    time: '00:00'
+  open-pull-requests-limit: 10
+  commit-message:
+    prefix: fix
+    prefix-development: chore
+    include: scope
