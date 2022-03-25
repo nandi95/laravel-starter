@@ -1,0 +1,27 @@
+# Local installation
+/public/storage
+/storage/*.key
+/vendor
+
+# Env
+.env
+.env.backup
+
+# Logs
+
+# IDE
+/.idea
+/.vscode
+.phpstorm.meta.php
+_ide_helper_models.php
+_ide_helper.php
+
+# Cache
+.phpunit.result.cache
+.php-cs-fixer.cache
+
+# Generated assets
+openapi.yml
+
+# System
+.DS_Store
