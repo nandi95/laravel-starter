@@ -1,27 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest as BaseFormRequest;
 
 class FormRequest extends BaseFormRequest
 {
-    public const COLUMN_LENGTHS = [
-        'unsigned_medium_integer' => 16777215,
-        'var_char'                => 255
-    ];
-
-    /**
-     * Indicates whether validation should stop after the first rule failure.
-     *
-     * @var bool
-     */
     protected $stopOnFirstFailure = true;
 
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -31,10 +22,12 @@ class FormRequest extends BaseFormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return array<string, ValidationRule|array|string>
      */
     public function rules(): array
     {
-        return [];
+        return [
+            //
+        ];
     }
 }

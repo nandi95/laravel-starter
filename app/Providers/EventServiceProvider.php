@@ -1,31 +1,39 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use App\Listeners\RecordRequestIdentifiers;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Event;
+use Laravel\Sanctum\Events\TokenAuthenticated;
 
 class EventServiceProvider extends ServiceProvider
 {
-    /**
-     * The event listener mappings for the application.
-     *
-     * @var array
-     */
     protected $listen = [
-        Registered::class => [
-            SendEmailVerificationNotification::class,
+        TokenAuthenticated::class => [
+            RecordRequestIdentifiers::class
         ],
+        DiagnosingHealth::class => [
+        ]
     ];
 
     /**
-     * Register any events for your application.
-     *
-     * @return void
+     * Register services.
      */
-    public function boot()
+    #[\Override]
+    public function register(): void
+    {
+        parent::register();
+        //
+    }
+
+    /**
+     * Bootstrap services.
+     */
+    #[\Override]
+    public function boot(): void
     {
         //
     }

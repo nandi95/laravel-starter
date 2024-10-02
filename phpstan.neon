@@ -1,22 +1,31 @@
 includes:
-    - ./vendor/nunomaduro/larastan/extension.neon
+    - ./vendor/larastan/larastan/extension.neon
+    - ./vendor/phpstan/phpstan-strict-rules/rules.neon
 
 parameters:
     treatPhpDocTypesAsCertain: true
 
+    strictRules:
+        strictCalls: false
+        booleansInConditions: false
+
     paths:
         - app
+        - config
+        - database
+        - routes
+        - tests
 
-    # The level 8 is the highest level
-    level: 5
+    level: 8
 
     ignoreErrors:
         -
             message: '#Variable \$router might not be defined.#'
             path: routes/api.php
-#        - '#Unsafe usage of new static#'
-#        - '#Call to an undefined method Illuminate\\Support\\HigherOrder#'
-#        - '#Attribute class JetBrains\\PhpStorm\\ArrayShape does not exist.#'
+        - '#PHPDoc tag @mixin contains unknown class App\\Models#'
+        -
+            identifier: missingType.iterableValue
     excludePaths:
 
-    checkMissingIterableValueType: false
+    checkBenevolentUnionTypes: true
+    checkUninitializedProperties: true

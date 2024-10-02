@@ -1,19 +1,13 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+declare(strict_types=1);
 
-/*
-|--------------------------------------------------------------------------
-| Console Routes
-|--------------------------------------------------------------------------
-|
-| This file is where you may define all of your Closure based console
-| commands. Each Closure is bound to a command instance allowing a
-| simple approach to interacting with each command's IO methods.
-|
-*/
+use App\Console\Commands\DeleteUsers;
+use App\Console\Commands\StageUnverifiedUsersForDeletion;
+use Illuminate\Auth\Console\ClearResetsCommand;
+use Laravel\Sanctum\Console\Commands\PruneExpired;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+Schedule::command(ClearResetsCommand::class)->daily()->runInBackground();
+Schedule::command(PruneExpired::class, ['--hours=24'])->daily()->runInBackground();
+Schedule::command(DeleteUsers::class)->daily();
+Schedule::command(StageUnverifiedUsersForDeletion::class)->daily();

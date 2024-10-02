@@ -1,77 +1,103 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use Database\Factories\UserFactory;
+use App\Traits\Impersonate;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Support\Carbon;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 /**
- * App\Models\User.
- *
- * @property int         $id
- * @property string      $name
- * @property string      $email
- * @property Carbon|null $email_verified_at
- * @property string      $password
- * @property string|null $remember_token
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @method static UserFactory factory(...$parameters)
- * @method static Builder|User newModelQuery()
- * @method static Builder|User newQuery()
- * @method static Builder|User query()
- * @method static Builder|User whereCreatedAt($value)
- * @method static Builder|User whereEmail($value)
- * @method static Builder|User whereEmailVerifiedAt($value)
- * @method static Builder|User whereId($value)
- * @method static Builder|User whereName($value)
- * @method static Builder|User wherePassword($value)
- * @method static Builder|User whereRememberToken($value)
- * @method static Builder|User whereTwoFactorRecoveryCodes($value)
- * @method static Builder|User whereTwoFactorSecret($value)
- * @method static Builder|User whereUpdatedAt($value)
- * @mixin \Eloquent
+ * @mixin IdeHelperUser
  */
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory;
+    use HasApiTokens,
+        HasFactory,
+        HasRoles,
+        HasUlids,
+        Impersonate,
+        Notifiable,
+        Notifiable,
+        SoftDeletes;
 
     /**
-     * The hourly rate in british pounds.
+     * The number of days to wait before deleting the user after soft deletion.
      */
-    public const HOURLY_RATE = 9.5;
+    public const int DELETION_DELAY = 30;
+
+    /**
+     * The number of days to wait until user gets soft-deleted if their email isn't verified.
+     */
+    public const int VERIFICATION_DELAY = 7;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var string[]
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
         'email',
+        'avatar',
         'password',
+        'ulid',
+        'email_verified_at',
     ];
 
     /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
+     * {@inheritDoc}
      */
     protected $hidden = [
+        'id',
         'password',
         'remember_token',
+        'email_verified_at',
     ];
 
     /**
-     * The attributes that should be cast to native types.
-     *
-     * @var array
+     * {@inheritDoc}
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    #[\Override]
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed'
+        ];
+    }
+
+    /**
+     * @return HasMany<UserProvider>
+     */
+    public function userProviders(): HasMany
+    {
+        return $this->hasMany(UserProvider::class);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[\Override]
+    public function uniqueIds()
+    {
+        return ['ulid'];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    #[\Override]
+    public function getRouteKeyName()
+    {
+        return 'ulid';
+    }
 }

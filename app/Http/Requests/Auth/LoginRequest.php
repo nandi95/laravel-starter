@@ -1,11 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\FormRequest;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
@@ -13,28 +18,28 @@ class LoginRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return array<string, Rule|array|string>
      */
+    #[\Override]
     public function rules(): array
     {
         return [
             'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string']
+            'password' => ['required', 'string'],
+            'remember' => ['nullable', 'boolean']
         ];
     }
 
     /**
      * Attempt to authenticate the request's credentials.
      *
-     * @return void
-     *
      * @throws ValidationException
      */
-    public function authenticate(): void
+    public function authenticate(?User $user): void
     {
         $this->ensureIsNotRateLimited();
 
-        if (!auth()->attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (!$user instanceof \App\Models\User || !Hash::check($this->get('password'), $user->password)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -47,8 +52,6 @@ class LoginRequest extends FormRequest
 
     /**
      * Ensure the login request is not rate limited.
-     *
-     * @return void
      *
      * @throws ValidationException
      */
@@ -72,11 +75,9 @@ class LoginRequest extends FormRequest
 
     /**
      * Get the rate limiting throttle key for the request.
-     *
-     * @return string
      */
     public function throttleKey(): string
     {
-        return Str::lower($this->input('email')) . '|' . $this->ip();
+        return Str::transliterate(Str::lower($this->input('email')) . '|' . $this->ip());
     }
 }
