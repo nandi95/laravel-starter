@@ -18,7 +18,7 @@ class AppSeeder extends Seeder
     public function run(): void
     {
         $admin = User::query()->firstOrCreate(
-            ['email' => 'support@laravel.com'],
+            ['email' => 'support@laravel.dev'],
             [
                 'name' => 'Admin User',
                 'password' => Hash::make('password'),
@@ -31,7 +31,7 @@ class AppSeeder extends Seeder
         }
 
         $testUser = User::query()->firstOrCreate(
-            ['email' => 'testing@laravel.com'],
+            ['email' => 'testing@laravel.dev'],
             [
                 'name' => 'Test User',
                 'password' => Hash::make('password'),

@@ -17,7 +17,7 @@ class DevelopmentSeeder extends Seeder
     public function run(): void
     {
         /** @var User $admin */
-        $admin = User::query()->where('email', 'support@lashbrill.co.uk')->firstOrFail();
+        $admin = User::query()->where('email', 'support@laravel.dev')->firstOrFail();
 
         User::factory(12)->createMany()->each->assignRole(Role::User);
 
