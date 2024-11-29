@@ -5,10 +5,12 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
+        "ext-redis": "*",
         "php": "^8.3",
         "laravel/framework": "^11.9",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.16",
+        "league/flysystem-aws-s3-v3": "^3.29",
         "matomo/device-detector": "^6.4",
         "spatie/laravel-permission": "^6.9",
         "stevebauman/location": "^7.3"
