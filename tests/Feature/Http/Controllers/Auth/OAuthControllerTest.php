@@ -13,7 +13,7 @@ use Tests\TestCase;
 #[\PHPUnit\Framework\Attributes\CoversClass(\App\Http\Controllers\Authentication\OAuthController::class)]
 class OAuthControllerTest extends TestCase
 {
-    public function testDeletionStatusForExistingUser(): void
+    public function test_deletion_status_for_existing_user(): void
     {
         /** @var User $user */
         $user = User::factory()
@@ -33,7 +33,7 @@ class OAuthControllerTest extends TestCase
             ]]);
     }
 
-    public function testDeletionStatusForNonExistingUser(): void
+    public function test_deletion_status_for_non_existing_user(): void
     {
         $payload = encrypt([
             'id' => 'random',
@@ -48,7 +48,7 @@ class OAuthControllerTest extends TestCase
             ]]);
     }
 
-    public function testDeletionStatusWithIncorrectEncryptionKey(): void
+    public function test_deletion_status_with_incorrect_encryption_key(): void
     {
         $encrypter = new Encrypter(Encrypter::generateKey(config('app.cipher')), config('app.cipher'));
 
@@ -61,7 +61,7 @@ class OAuthControllerTest extends TestCase
             ->assertBadRequest();
     }
 
-    public function testDeletionStatusForSoftDeletedUser(): void
+    public function test_deletion_status_for_soft_deleted_user(): void
     {
         $this->withoutExceptionHandling();
         $now = now()->toImmutable();
@@ -94,7 +94,7 @@ class OAuthControllerTest extends TestCase
             ]]);
     }
 
-    public function testDeletionStatusWithIncorrectDataInPayload(): void
+    public function test_deletion_status_with_incorrect_data_in_payload(): void
     {
         $payload = encrypt([
             'provider' => OauthProvider::GOOGLE

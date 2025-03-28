@@ -1,0 +1,16 @@
+{
+	# Enable FrankenPHP
+	frankenphp
+	# Configure when the directive must be executed
+	order php_server before file_server
+	local_certs
+}
+
+api.test.localhost {
+	root * /var/www/html/public
+	php_server
+}
+
+mailhog.test.localhost {
+	reverse_proxy mailhog:8025
+}

@@ -1,0 +1,31 @@
+{
+	# strongly encouraged to set an email for ssl certs
+	email support@laravel.dev
+	# Enable FrankenPHP
+	frankenphp
+	# Configure when the directive must be executed
+	order php_server before file_server
+	admin off
+	log {
+		output file /var/log/caddy/access.log
+	}
+	grace_period 10s
+
+	servers {
+		trusted_proxies cloudflare {
+			interval 12h
+			timeout 15s
+		}
+        client_ip_headers Cf-Connecting-Ip X-Forwarded-For X-Real-IP
+	}
+}
+
+www.api.test.com, www.test.com {
+	redir https://{labels.1}.{labels.0}{uri} permanent
+}
+
+api.test.com {
+	root * /var/www/html/public/
+	encode zstd br gzip
+	php_server
+}

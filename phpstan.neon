@@ -6,7 +6,6 @@ parameters:
     treatPhpDocTypesAsCertain: true
 
     strictRules:
-        strictCalls: false
         booleansInConditions: false
 
     paths:

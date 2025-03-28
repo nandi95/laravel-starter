@@ -12,6 +12,7 @@ class HasRedisConnection
 {
     /**
      * Handle the event.
+     *
      * @throws HealthCheckException
      */
     public function handle(DiagnosingHealth $event): void

@@ -13,12 +13,21 @@ class ImageTest extends TestCase
     /**
      * A basic unit test example.
      */
-    public function testItReturnsSourceAttributeAsExpected(): void
+    public function test_it_returns_source_attribute_as_expected(): void
     {
-        $image = new Image(['storage_location' => 'https://loremflickr.com/320/240']);
+        // Mock the Storage facade
+        Storage::fake('s3');
 
+        $image = new Image(['storage_location' => 'https://loremflickr.com/320/240']);
         $this->assertSame('https://loremflickr.com/320/240', $image->source);
+
         $image->setAttribute('storage_location', 'gallery/1/images/image.jpg');
-        $this->assertSame(Storage::url('gallery/1/images/image.jpg'), $image->source);
+        // Mock the URL generation
+        Storage::shouldReceive('url')
+            ->once()
+            ->with('gallery/1/images/image.jpg')
+            ->andReturn('http://fake-url.com/gallery/1/images/image.jpg');
+
+        $this->assertSame('http://fake-url.com/gallery/1/images/image.jpg', $image->source);
     }
 }
