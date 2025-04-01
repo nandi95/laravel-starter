@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use JsonException;
@@ -33,6 +34,10 @@ class OAuthController extends Controller
      */
     public function redirect(Request $request, OauthProvider $provider)
     {
+        Log::debug('OAuth redirect initiated', [
+            'provider' => $provider->value
+        ]);
+
         return Socialite::driver($provider->value)
             ->stateless()
             ->redirect();
@@ -45,12 +50,20 @@ class OAuthController extends Controller
      */
     public function callback(Request $request, OauthProvider $provider): View
     {
+        Log::info('Processing OAuth callback', [
+            'provider' => $provider->value
+        ]);
+
         /** @var \Laravel\Socialite\Two\User $oAuthUser */
         $oAuthUser = Socialite::driver($provider->value)
             ->stateless()
             ->user();
 
         if (!$oAuthUser?->token) {
+            Log::warning('OAuth authentication failed - no token received', [
+                'provider' => $provider->value
+            ]);
+
             return view('oauth', [
                 'message' => [
                     'ok' => false,
@@ -68,7 +81,17 @@ class OAuthController extends Controller
 
         /** @var User $user */
         if (!$userProvider) {
+            Log::info('New OAuth user detected', [
+                'provider' => $provider->value,
+                'email' => $oAuthUser->getEmail()
+            ]);
+
             if (User::where('email', $oAuthUser->getEmail())->exists()) {
+                Log::warning('OAuth registration failed - email already exists', [
+                    'provider' => $provider->value,
+                    'email' => $oAuthUser->getEmail()
+                ]);
+
                 return view('oauth', [
                     'message' => [
                         'ok' => false,
@@ -96,15 +119,29 @@ class OAuthController extends Controller
                     'name' => $provider,
                 ]);
 
+                Log::info('New OAuth user created successfully', [
+                    'user_id' => $user->getKey(),
+                    'provider' => $provider->value,
+                    'email' => $user->email
+                ]);
+
                 return $user;
             });
         } else {
             $user = $userProvider->user;
+            Log::debug('Existing OAuth user authenticated', [
+                'user_id' => $user->getKey(),
+                'provider' => $provider->value
+            ]);
         }
 
         if ($user->trashed()) {
             // Was staged for deletion, but the user has returned
             $user->restore();
+            Log::info('Restored previously soft-deleted OAuth user', [
+                'user_id' => $user->getKey(),
+                'provider' => $provider->value
+            ]);
         }
 
         $sanctumToken = $user->createToken(
@@ -114,6 +151,12 @@ class OAuthController extends Controller
         );
 
         $sanctumToken->accessToken->save();
+
+        Log::info('OAuth authentication successful', [
+            'user_id' => $user->getKey(),
+            'provider' => $provider->value,
+            'token_expiry' => 'one month'
+        ]);
 
         return view('oauth', [
             'message' => [
@@ -133,6 +176,10 @@ class OAuthController extends Controller
      */
     public function deAuth(DeAuthRequest $request, OauthProvider $provider): JsonResponse
     {
+        Log::info('OAuth de-authentication request received', [
+            'provider' => $provider->value
+        ]);
+
         /** @var UserProvider $userProvider */
         $userProvider = UserProvider::whereName($provider)
             ->where('provider_id', $request->decodedSignature()['user']['user_id'])
@@ -142,9 +189,17 @@ class OAuthController extends Controller
         // if the user has normal login or other social logins
         if ($userProvider->user->password || $userProvider->user->userProviders()->count() > 1) {
             // delete this social login only
+            Log::info('Removing OAuth provider from user', [
+                'user_id' => $userProvider->user->getKey(),
+                'provider' => $provider->value
+            ]);
             $userProvider->delete();
         } else {
             // Stage user for deletion
+            Log::info('Staging user for deletion after OAuth de-authentication', [
+                'user_id' => $userProvider->user->getKey(),
+                'provider' => $provider->value
+            ]);
             $userProvider->user->delete();
         }
 
@@ -159,15 +214,28 @@ class OAuthController extends Controller
 
     public function deletionStatus(Request $request): JsonResponse
     {
+        Log::debug('Checking OAuth user deletion status', [
+            'code_provided' => (bool) $request->input('code')
+        ]);
+
         $request->validate(['code' => ['required', 'string']]);
 
         $payload = rescue(
             static fn () => decrypt($request->input('code')),
-            static fn () => abort(Response::HTTP_BAD_REQUEST, 'Invalid code.'),
+            static function () {
+                Log::warning('Invalid deletion status code provided');
+                abort(Response::HTTP_BAD_REQUEST, 'Invalid code.');
+            },
             static fn (Throwable $throwable): bool => !$throwable instanceof DecryptException
         );
 
-        abort_unless(isset($payload['id'], $payload['provider']), Response::HTTP_BAD_REQUEST, 'Invalid code.');
+        if (!isset($payload['id'], $payload['provider'])) {
+            Log::warning('Invalid deletion status payload structure', [
+                'has_id' => isset($payload['id']),
+                'has_provider' => isset($payload['provider'])
+            ]);
+            abort(Response::HTTP_BAD_REQUEST, 'Invalid code.');
+        }
 
         /** @var User|null $user */
         $user = User::withTrashed()
@@ -177,6 +245,12 @@ class OAuthController extends Controller
                 fn (Builder|EloquentBuilder $query) => $query->where('name', $payload['provider'])
             )
             ->first();
+
+        Log::info('OAuth user deletion status checked', [
+            'user_exists' => (bool) $user,
+            'deletion_scheduled' => $user?->deleted_at ? true : false,
+            'provider' => $payload['provider'] ?? null
+        ]);
 
         return response()->json(['data' => [
             'userExists' => (bool) $user,

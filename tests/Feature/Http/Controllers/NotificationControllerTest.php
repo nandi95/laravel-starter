@@ -92,7 +92,7 @@ class NotificationControllerTest extends TestCase
             ->assertNoContent();
 
         $this->assertDatabaseMissing('notifications', [
-            'notifiable_id' => $this->user->id,
+            'notifiable_id' => $this->user->getKey(),
             'readAt' => null,
         ]);
     }

@@ -30,6 +30,7 @@ alwaysApply: true
   - Utilize Laravel's Eloquent ORM for database interactions.
   - Use Laravel's query builder for complex database queries.
   - Implement proper database migrations and seeders.
+  - Always use ->getKey() instead of ->id on models to access the identifier
 
   Dependencies
   - Laravel (latest stable version)

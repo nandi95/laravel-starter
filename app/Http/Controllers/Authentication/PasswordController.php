@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password as PasswordRule;
@@ -25,6 +26,10 @@ class PasswordController extends Controller
      */
     public function sendResetPasswordLink(Request $request): JsonResponse
     {
+        Log::info('Password reset link requested', [
+            'email' => $request->get('email')
+        ]);
+
         $request->validate([
             'email' => ['required', 'email'],
         ]);
@@ -37,10 +42,18 @@ class PasswordController extends Controller
         );
 
         if ($status !== Password::RESET_LINK_SENT) {
+            Log::warning('Failed to send password reset link', [
+                'email' => $request->get('email'),
+                'status' => $status
+            ]);
             throw ValidationException::withMessages([
                 'email' => [__($status)],
             ]);
         }
+
+        Log::info('Password reset link sent successfully', [
+            'email' => $request->get('email')
+        ]);
 
         return response()->json(['message' => __($status)]);
     }
@@ -52,6 +65,10 @@ class PasswordController extends Controller
      */
     public function resetPassword(Request $request): JsonResponse
     {
+        Log::info('Password reset attempt', [
+            'email' => $request->get('email')
+        ]);
+
         $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email', Rule::exists(User::class, 'email')],
@@ -66,12 +83,19 @@ class PasswordController extends Controller
             $request->only('email', 'password', 'token'),
             static function (User $user, string $password): void {
                 $user->forceFill(['password' => Hash::make($password)])->save();
-
+                Log::info('Password reset successful', [
+                    'user_id' => $user->getKey(),
+                    'email' => $user->email
+                ]);
                 event(new PasswordReset($user));
             }
         );
 
         if ($status !== Password::PASSWORD_RESET) {
+            Log::warning('Password reset failed', [
+                'email' => $request->get('email'),
+                'status' => $status
+            ]);
             throw ValidationException::withMessages([
                 'email' => [__($status)],
             ]);
@@ -90,12 +114,19 @@ class PasswordController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        Log::info('Password update attempt', [
+            'user_id' => $user->getKey()
+        ]);
+
         $request->validate([
             'current_password' => [$user->password ? 'required' : 'sometimes', 'string'],
             'password' => ['required', 'confirmed', PasswordRule::defaults()],
         ]);
 
         if ($user->password && !Hash::check($request->get('current_password'), $user->password)) {
+            Log::warning('Invalid current password provided for password update', [
+                'user_id' => $user->getKey()
+            ]);
             throw ValidationException::withMessages([
                 'current_password' => __('auth.password'),
             ]);
@@ -103,6 +134,10 @@ class PasswordController extends Controller
 
         $user->update([
             'password' => Hash::make($request->get('password')),
+        ]);
+
+        Log::info('Password updated successfully', [
+            'user_id' => $user->getKey()
         ]);
 
         return response()->json(status: Response::HTTP_NO_CONTENT);

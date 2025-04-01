@@ -112,7 +112,7 @@ class ImageControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('images', [
-            'id' => $image->id,
+            'id' => $image->getKey(),
             'title' => 'Updated Title'
         ]);
     }
@@ -127,7 +127,7 @@ class ImageControllerTest extends TestCase
             ->assertForbidden();
 
         $this->assertDatabaseHas('images', [
-            'id' => $image->id
+            'id' => $image->getKey()
         ]);
 
         Bus::assertNotDispatched(DeleteFile::class);
@@ -143,7 +143,7 @@ class ImageControllerTest extends TestCase
             ->assertNoContent();
 
         $this->assertDatabaseMissing('images', [
-            'id' => $image->id
+            'id' => $image->getKey()
         ]);
 
         Bus::assertDispatched(DeleteFile::class, static function ($job) use ($image) {

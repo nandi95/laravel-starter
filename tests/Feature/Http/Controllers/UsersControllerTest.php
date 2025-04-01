@@ -64,7 +64,7 @@ class UsersControllerTest extends TestCase
 
         $userIds = collect($response->json('data'))->pluck('id')->toArray();
 
-        $this->assertNotContains($otherAdmin->id, $userIds);
+        $this->assertNotContains($otherAdmin->getKey(), $userIds);
         $this->assertCount(3 + 1, $userIds);
     }
 

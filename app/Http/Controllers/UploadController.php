@@ -28,6 +28,11 @@ class UploadController extends Controller
      */
     public function createUpload(Request $request): JsonResponse
     {
+        Log::info('Starting multipart upload creation', [
+            'filename' => $request->input('filename'),
+            'type' => $request->input('type')
+        ]);
+
         $request->validate([
             'filename' => 'required|string',
             'type' => 'required|string'
@@ -42,6 +47,11 @@ class UploadController extends Controller
                 // the browser will download the file with this name
                 'ContentDisposition' => 'attachment; filename="' . $request->input('filename') . '"',
                 'ContentType' => $request->input('type')
+            ]);
+
+            Log::debug('Multipart upload created successfully', [
+                'key' => $result['Key'],
+                'uploadId' => $result['UploadId']
             ]);
         } catch (Throwable $exception) {
             Log::error(
@@ -72,6 +82,11 @@ class UploadController extends Controller
      */
     public function getUploadedParts(Request $request, string $uploadId): JsonResponse
     {
+        Log::debug('Fetching uploaded parts', [
+            'key' => $request->input('key'),
+            'uploadId' => $uploadId
+        ]);
+
         $request->validate(['key' => ['required', 'string']]);
 
         $parts = $this->listPartsPage($request->input('key'), $uploadId, 0);
@@ -84,6 +99,12 @@ class UploadController extends Controller
      */
     public function signPart(Request $request, string $uploadId, int $partNumber): JsonResponse
     {
+        Log::debug('Signing part for upload', [
+            'key' => $request->input('key'),
+            'uploadId' => $uploadId,
+            'partNumber' => $partNumber
+        ]);
+
         $request->validate(['key' => ['required', 'string']]);
 
         $command = $this->storageClient()->getCommand('uploadPart', [
@@ -134,6 +155,12 @@ class UploadController extends Controller
      */
     public function completeUpload(Request $request, string $uploadId): JsonResponse
     {
+        Log::info('Completing multipart upload', [
+            'key' => $request->input('key'),
+            'uploadId' => $uploadId,
+            'partsCount' => count($request->input('parts', []))
+        ]);
+
         $request->validate([
             'key' => ['required', 'string'],
             'parts' => ['required', 'array'],
@@ -158,6 +185,11 @@ class UploadController extends Controller
      */
     public function cancelUpload(Request $request, string $uploadId): JsonResponse
     {
+        Log::info('Cancelling multipart upload', [
+            'key' => $request->input('key'),
+            'uploadId' => $uploadId
+        ]);
+
         $request->validate(['key' => ['required', 'string']]);
 
         $this->storageClient()->abortMultipartUpload([

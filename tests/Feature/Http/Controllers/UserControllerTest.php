@@ -57,7 +57,7 @@ class UserControllerTest extends TestCase
             ->assertOk();
 
         $this->assertDatabaseHas('users', [
-            'id' => $this->user->id,
+            'id' => $this->user->getKey(),
             'name' => 'New Name',
             'email' => 'newemail@example.com'
         ]);
@@ -122,7 +122,7 @@ class UserControllerTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('users', [
-            'id' => $this->user->id,
+            'id' => $this->user->getKey(),
             'avatar' => 'user/' . $this->user->ulid . '/' . AssetType::Image->value . 's/' . $file->name
         ]);
 

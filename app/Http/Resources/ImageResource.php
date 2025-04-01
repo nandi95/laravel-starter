@@ -23,7 +23,7 @@ class ImageResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->when(auth()->user()?->hasRole(Role::Admin), $this->resource->id),
+            'id' => $this->when(auth()->user()?->hasRole(Role::Admin), $this->resource->getKey()),
             'width' => $this->resource->width,
             'height' => $this->resource->height,
             'title' => $this->resource->title,

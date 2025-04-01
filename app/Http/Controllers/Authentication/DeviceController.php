@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -27,6 +28,11 @@ class DeviceController extends Controller
         /** @var PersonalAccessToken $currentToken */
         $currentToken = $user->currentAccessToken();
 
+        Log::debug('Fetching user devices', [
+            'user_id' => $user->getKey(),
+            'current_token_id' => $currentToken->getKey()
+        ]);
+
         $tokens = $user->tokens()
             ->orderByDesc('last_used_at')
             ->whereNull('impersonator_id')
@@ -38,6 +44,11 @@ class DeviceController extends Controller
                 'is_current' => $currentToken->getKey() === $token->getKey(),
             ]));
 
+        Log::debug('Retrieved user devices', [
+            'user_id' => $user->getKey(),
+            'device_count' => $tokens->count()
+        ]);
+
         return PersonalAccessTokenResource::collection($tokens);
     }
 
@@ -46,6 +57,10 @@ class DeviceController extends Controller
      */
     public function deviceDisconnect(Request $request): JsonResponse
     {
+        Log::info('Device disconnect request received', [
+            'user_id' => $request->user()->getKey()
+        ]);
+
         $request->validate([
             'hash' => 'required',
         ]);
@@ -59,12 +74,21 @@ class DeviceController extends Controller
         $currentToken = $user->currentAccessToken();
 
         if ($currentToken->getKey() === $id) {
+            Log::warning('Attempted to disconnect current device', [
+                'user_id' => $user->getKey(),
+                'token_id' => $id
+            ]);
+
             return response()->json([
                 'message' => __('You cannot disconnect the current device.'),
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         if ($id !== 0) {
+            Log::info('Disconnecting device', [
+                'user_id' => $user->getKey(),
+                'token_id' => $id
+            ]);
             $user->tokens()
                 ->whereKey($id)
                 ->delete();

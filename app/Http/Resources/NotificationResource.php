@@ -22,7 +22,7 @@ class NotificationResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->resource->id,
+            'id' => $this->resource->getKey(),
             'data' => $this->resource->data,
             'readAt' => $this->resource->read_at,
             'createdAt' => $this->resource->created_at,

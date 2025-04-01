@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
@@ -28,6 +29,11 @@ class AuthController extends Controller
      */
     public function register(Request $request): JsonResponse
     {
+        Log::info('Starting new user registration', [
+            'email' => $request->get('email'),
+            'name' => $request->get('name')
+        ]);
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class, 'email')],
@@ -47,6 +53,11 @@ class AuthController extends Controller
 
         event(new Registered($user));
 
+        Log::info('User registered successfully', [
+            'user_id' => $user->getKey(),
+            'email' => $user->email
+        ]);
+
         return response()->json(status: Response::HTTP_CREATED);
     }
 
@@ -57,6 +68,12 @@ class AuthController extends Controller
      */
     public function login(LoginRequest $request): JsonResponse
     {
+        Log::info('Login attempt', [
+            'email' => $request->get('email'),
+            'device' => $this->getDeviceName(),
+            'remember' => $request->boolean('remember')
+        ]);
+
         /** @var User $user */
         $user = User::withTrashed()->where('email', $request->get('email'))->first();
 
@@ -64,6 +81,10 @@ class AuthController extends Controller
 
         if ($user->trashed()) {
             $user->restore();
+            Log::info('Restored previously soft-deleted user during login', [
+                'user_id' => $user->getKey(),
+                'email' => $user->email
+            ]);
         }
 
         $sanctumToken = $user->createToken(
@@ -74,6 +95,12 @@ class AuthController extends Controller
                 now()->addDay()
         );
 
+        Log::info('User logged in successfully', [
+            'user_id' => $user->getKey(),
+            'email' => $user->email,
+            'token_expiry' => $request->boolean('remember') ? 'one month' : 'one day'
+        ]);
+
         return response()->json(['data' => $sanctumToken->plainTextToken]);
     }
 
@@ -82,6 +109,11 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
+        Log::info('User logging out', [
+            'user_id' => $request->user()->getKey(),
+            'token_id' => $request->user()->currentAccessToken()->id
+        ]);
+
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(status: Response::HTTP_NO_CONTENT);
