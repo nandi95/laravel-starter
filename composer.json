@@ -7,7 +7,7 @@
     "require": {
         "ext-redis": "*",
         "php": "^8.3",
-        "laravel/framework": "^11.9",
+        "laravel/framework": "^v12.4.1",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.16",
         "league/flysystem-aws-s3-v3": "^3.29",
