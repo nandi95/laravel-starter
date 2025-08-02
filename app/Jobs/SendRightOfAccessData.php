@@ -38,7 +38,7 @@ class SendRightOfAccessData implements ShouldQueue
             // todo - add more data
         ];
 
-        Mail::to($this->user->email)->send(new RightOfAccessData($data));
+        Mail::to($this->user->email)->sendNow(new RightOfAccessData($data));
 
         Log::info('Sent right of access data to user', ['user_id' => $this->user->getKey()]);
     }
