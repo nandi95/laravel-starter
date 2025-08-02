@@ -48,7 +48,9 @@ trait Impersonate
         }
 
         /** @var PersonalAccessToken $currentToken */
-        if ($currentToken = $this->currentAccessToken()) {
+        $currentToken = $this->currentAccessToken();
+
+        if ($currentToken) {
             // this can only happen if the current user isn't signed in with a token
             cache()->set(
                 'impersonation_by_' . $this->getKey(),
