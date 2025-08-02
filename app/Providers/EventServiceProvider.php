@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Listeners\HealthChecks\HasMySqlConnection;
+use App\Listeners\HealthChecks\HasDatabaseConnection;
 use App\Listeners\HealthChecks\HasRedisConnection;
+use App\Listeners\HealthChecks\HasSufficientDiskSpace;
 use App\Listeners\RecordRequestIdentifiers;
 use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -18,8 +19,9 @@ class EventServiceProvider extends ServiceProvider
             RecordRequestIdentifiers::class
         ],
         DiagnosingHealth::class => [
-            HasMySqlConnection::class,
-            HasRedisConnection::class
+            HasDatabaseConnection::class,
+            HasRedisConnection::class,
+            HasSufficientDiskSpace::class
         ],
     ];
 

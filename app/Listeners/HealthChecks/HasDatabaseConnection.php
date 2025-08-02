@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Listeners\HealthChecks;
 
+use App\Exceptions\HealthCheckException;
 use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Support\Facades\DB;
 
-class HasMySqlConnection
+class HasDatabaseConnection
 {
     /**
      * Handle the event.
@@ -17,7 +18,7 @@ class HasMySqlConnection
         try {
             DB::connection()->getPdo();
         } catch (\Exception $e) {
-            throw new \RuntimeException('Could not connect to the database: ' . $e->getMessage(), 0, $e);
+            throw new HealthCheckException('Could not connect to the database: ' . $e->getMessage(), 0, $e);
         }
     }
 }

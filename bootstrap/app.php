@@ -13,7 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         api: __DIR__ . '/../routes/api.php',
         commands: __DIR__ . '/../routes/console.php',
-        apiPrefix: '',
+        health: '/up',
+        apiPrefix: ''
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->throttleApi(redis: true)
