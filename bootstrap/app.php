@@ -29,8 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
             ])
             ->append(SetCacheHeaders::using([
                 'etag',
-                'max_age' => 24 * 60 * 60,
-                'private',
+                'max_age' => 0,
+                'public',
             ]));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
