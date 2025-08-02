@@ -222,7 +222,7 @@ class OAuthController extends Controller
 
         $payload = rescue(
             static fn () => decrypt($request->input('code')),
-            static function () {
+            static function (): void {
                 Log::warning('Invalid deletion status code provided');
                 abort(Response::HTTP_BAD_REQUEST, 'Invalid code.');
             },
@@ -248,7 +248,7 @@ class OAuthController extends Controller
 
         Log::info('OAuth user deletion status checked', [
             'user_exists' => (bool) $user,
-            'deletion_scheduled' => $user?->deleted_at ? true : false,
+            'deletion_scheduled' => (bool) $user?->deleted_at,
             'provider' => $payload['provider'] ?? null
         ]);
 

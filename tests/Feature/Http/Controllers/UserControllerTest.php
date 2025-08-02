@@ -21,6 +21,7 @@ class UserControllerTest extends TestCase
 
     private User $otherUser;
 
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -96,7 +97,7 @@ class UserControllerTest extends TestCase
             ])
             ->assertOk();
 
-        $this->assertNull($this->user->fresh()->email_verified_at);
+        $this->assertNotInstanceOf(\Illuminate\Support\Carbon::class, $this->user->fresh()->email_verified_at);
     }
 
     public function test_can_update_user_avatar(): void
@@ -151,9 +152,7 @@ class UserControllerTest extends TestCase
             ])
             ->assertOk();
 
-        Bus::assertDispatched(\App\Jobs\DeleteFile::class, function ($job) use ($oldPath) {
-            return $job->path === $oldPath;
-        });
+        Bus::assertDispatched(\App\Jobs\DeleteFile::class, fn ($job): bool => $job->path === $oldPath);
     }
 
     public function test_validates_avatar_update_request(): void

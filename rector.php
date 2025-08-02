@@ -48,9 +48,9 @@ return RectorConfig::configure()
         // strictBooleans: true,
         carbon: true,
         rectorPreset: true,
-        phpunitCodeQuality: true,
-        phpunit: true,
+        phpunitCodeQuality: true
     )
+    ->withComposerBased(phpunit: true)
     ->withRules([
         AddVoidReturnTypeWhereNoReturnRector::class,
     ]);

@@ -21,7 +21,7 @@ class FileStoreRequest extends FormRequest
     {
         $prependWith = $assetType->toStoragePath() . '/';
 
-        if ($for) {
+        if ($for instanceof \Illuminate\Database\Eloquent\Model) {
             $modelType = array_flip(Relation::morphMap())[$for::class];
 
             $prependWith = $modelType . '/' . $for->getRouteKey() . '/' . $prependWith;

@@ -17,6 +17,7 @@ class ImageControllerTest extends TestCase
 {
     private User $user;
 
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -53,7 +54,7 @@ class ImageControllerTest extends TestCase
     public function test_can_store_new_image(): void
     {
         $file = UploadedFile::fake()->create('test.jpg', 100, 'image/jpeg');
-        $path = $file->store('tmp');
+        $file->store('tmp');
 
         Storage::shouldReceive('exists')
             ->andReturn(true);
@@ -146,9 +147,7 @@ class ImageControllerTest extends TestCase
             'id' => $image->getKey()
         ]);
 
-        Bus::assertDispatched(DeleteFile::class, static function ($job) use ($image) {
-            return $job->path === $image->storage_location;
-        });
+        Bus::assertDispatched(DeleteFile::class, static fn ($job): bool => $job->path === $image->storage_location);
     }
 
     public function test_validates_image_store_request(): void

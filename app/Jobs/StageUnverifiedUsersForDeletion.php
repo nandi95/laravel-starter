@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Models\User;
@@ -25,7 +27,7 @@ class StageUnverifiedUsersForDeletion extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(): void
     {
         User::whereNull('email_verified_at')
             ->where('created_at', '<=', now()->subDays(User::VERIFICATION_DELAY))

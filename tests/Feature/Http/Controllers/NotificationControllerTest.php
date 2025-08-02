@@ -16,6 +16,7 @@ class NotificationControllerTest extends TestCase
 
     private User $otherUser;
 
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();

@@ -23,7 +23,7 @@ class UserResource extends JsonResource
     #[\Override]
     public function toArray(Request $request): array
     {
-        $avatar = 'https://www.gravatar.com/avatar/' . md5($this->resource->email);
+        $avatar = 'https://www.gravatar.com/avatar/' . md5((string) $this->resource->email);
 
         if ($this->resource->avatar) {
             // avatar might be coming from a user provider

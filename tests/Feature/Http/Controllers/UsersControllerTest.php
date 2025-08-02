@@ -17,6 +17,7 @@ class UsersControllerTest extends TestCase
 
     private User $regularUser;
 
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
