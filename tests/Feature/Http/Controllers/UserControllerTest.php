@@ -7,7 +7,6 @@ namespace Tests\Feature\Http\Controllers;
 use App\Enums\AssetType;
 use App\Jobs\MoveFile;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
@@ -15,8 +14,6 @@ use Tests\TestCase;
 
 class UserControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     private User $user;
 
     private User $otherUser;

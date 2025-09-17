@@ -5,13 +5,10 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class NotificationControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     private User $user;
 
     private User $otherUser;

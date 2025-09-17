@@ -1,0 +1,103 @@
+# Development environment for Motus
+name: motus
+
+x-deploy: &default-deploy
+    replicas: 1
+    update_config:
+        parallelism: 1
+        failure_action: rollback
+        order: start-first
+
+services:
+    api:
+        image: ghcr.io/wehomemove/motus-api
+        network_mode: host
+        depends_on:
+            - mailhog
+            - database
+            - redis
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost/up" ]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 10s
+        security_opt:
+            - label:disable
+        ports:
+            - "80:80"
+            - "443:443"
+            - "443:443/udp"
+        volumes:
+            - ./:/var/www/html:rw,z
+            - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro,z
+            - ./docker/php.ini:/usr/local/etc/php/conf.d/99-custom.ini:ro,z
+        environment:
+            - DOCUMENT_ROOT=/public
+            - DISABLE_GREETING=1
+            - APP_USER=${USER_ID:-1000}
+            - APP_GROUP=${GROUP_ID:-1000}
+            - FIX_APP_PATH_PERMISSION=1
+        develop:
+            watch:
+                -   action: sync
+                    path: .
+                    target: /var/www/html
+                    ignore:
+                        - .git/
+                        - vendor/
+                        - .vscode/
+                        - node_modules/
+    redis:
+        stop_grace_period: 30s
+        image: redis:7
+        deploy:
+            <<: *default-deploy
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
+        command: [ "redis-server", "--appendonly", "no", "--maxmemory", "500mb", "--maxmemory-policy", "allkeys-lru" ]
+        healthcheck:
+            test: [ "CMD", "redis-cli", "ping" ]
+            interval: 1s
+            timeout: 3s
+            retries: 5
+        volumes:
+            - redis_motus:/data
+    database:
+        stop_grace_period: 30s
+        image: imresamu/postgis:17-3.5.2-alpine3.21
+        logging:
+            options:
+                max-size: '12m'
+                max-file: '5'
+        deploy:
+            <<: *default-deploy
+        restart: unless-stopped
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        volumes:
+            - postgres_motus:/var/lib/postgresql/data
+        ports:
+            # expose port 5432 to host for debugging
+            - "5432:5432"
+        env_file:
+            - .env
+        environment:
+            POSTGRES_DB: 'motus'
+            POSTGRES_HOST_AUTH_METHOD: 'trust'
+    mailhog:
+        image: mailhog/mailhog
+        logging:
+            driver: 'none'  # disable saving logs
+        ports:
+            - 1025:1025 # smtp server
+            - 8025:8025 # web ui
+
+volumes:
+    postgres_motus:
+    redis_motus:

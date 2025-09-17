@@ -6,13 +6,10 @@ namespace Tests\Feature\Http\Controllers;
 
 use App\Enums\Role;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class UsersControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     private User $admin;
 
     private User $regularUser;

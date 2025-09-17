@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers\Auth;
 
 use App\Enums\OauthProvider;
+use App\Http\Controllers\Authentication\OAuthController;
 use App\Models\User;
 use App\Models\UserProvider;
 use Illuminate\Encryption\Encrypter;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
-#[\PHPUnit\Framework\Attributes\CoversClass(\App\Http\Controllers\Authentication\OAuthController::class)]
+#[CoversClass(OAuthController::class)]
 class OAuthControllerTest extends TestCase
 {
     public function test_deletion_status_for_existing_user(): void

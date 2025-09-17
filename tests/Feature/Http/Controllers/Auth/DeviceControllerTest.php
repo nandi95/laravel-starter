@@ -5,15 +5,12 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers\Auth;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Crypt;
 use Laravel\Sanctum\PersonalAccessToken;
 use Tests\TestCase;
 
 class DeviceControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_user_can_retrieve_devices(): void
     {
         $user = User::factory()->create();

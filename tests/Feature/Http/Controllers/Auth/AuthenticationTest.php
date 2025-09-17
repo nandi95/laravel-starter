@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers\Auth;
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
         $user = User::factory()->create();
