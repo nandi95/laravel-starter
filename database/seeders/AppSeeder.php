@@ -20,7 +20,8 @@ class AppSeeder extends Seeder
         $admin = User::query()->firstOrCreate(
             ['email' => 'support@laravel.dev'],
             [
-                'name' => 'Admin User',
+                'first_name' => 'Admin',
+                'last_name' => 'User',
                 'password' => Hash::make('password'),
                 'ulid' => Str::ulid()->toBase32(),
                 'email_verified_at' => now(),
@@ -33,7 +34,8 @@ class AppSeeder extends Seeder
         $testUser = User::query()->firstOrCreate(
             ['email' => 'testing@laravel.dev'],
             [
-                'name' => 'Test User',
+                'first_name' => 'Test',
+                'last_name' => 'User',
                 'password' => Hash::make('password'),
                 'ulid' => Str::ulid()->toBase32(),
                 'email_verified_at' => now(),

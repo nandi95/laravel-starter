@@ -19,7 +19,7 @@ class UsersController extends Controller
     {
         return UserResource::collection(
             User::withoutRole(Role::Admin)
-                ->orderBy('name')
+                ->orderBy('first_name')
                 ->paginate(10)
         );
     }

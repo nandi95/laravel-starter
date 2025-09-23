@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class NotificationControllerTest extends TestCase
@@ -25,13 +26,13 @@ class NotificationControllerTest extends TestCase
     {
         // Create some notifications for the user
         $this->user->notifications()->create([
-            'id' => 'test-notification-1',
+            'id' => Str::uuid()->toString(),
             'type' => 'App\Notifications\TestNotification',
             'data' => ['message' => 'Test notification 1'],
         ]);
 
         $this->user->notifications()->create([
-            'id' => 'test-notification-2',
+            'id' => Str::uuid()->toString(),
             'type' => 'App\Notifications\TestNotification',
             'data' => ['message' => 'Test notification 2'],
         ]);
@@ -58,7 +59,7 @@ class NotificationControllerTest extends TestCase
         // Create 15 notifications
         for ($i = 0; $i < 15; $i++) {
             $this->user->notifications()->create([
-                'id' => "test-notification-{$i}",
+                'id' => Str::uuid()->toString(),
                 'type' => 'App\Notifications\TestNotification',
                 'data' => ['message' => "Test notification {$i}"],
             ]);
@@ -74,13 +75,13 @@ class NotificationControllerTest extends TestCase
     {
         // Create some unread notifications
         $this->user->notifications()->create([
-            'id' => 'test-notification-1',
+            'id' => Str::uuid()->toString(),
             'type' => 'App\Notifications\TestNotification',
             'data' => ['message' => 'Test notification 1'],
         ]);
 
         $this->user->notifications()->create([
-            'id' => 'test-notification-2',
+            'id' => Str::uuid()->toString(),
             'type' => 'App\Notifications\TestNotification',
             'data' => ['message' => 'Test notification 2'],
         ]);
@@ -91,14 +92,14 @@ class NotificationControllerTest extends TestCase
 
         $this->assertDatabaseMissing('notifications', [
             'notifiable_id' => $this->user->getKey(),
-            'readAt' => null,
+            'read_at' => null,
         ]);
     }
 
     public function test_can_mark_single_notification_as_read(): void
     {
         $notification = $this->user->notifications()->create([
-            'id' => 'test-notification',
+            'id' => Str::uuid()->toString(),
             'type' => 'App\Notifications\TestNotification',
             'data' => ['message' => 'Test notification'],
         ]);
@@ -119,7 +120,7 @@ class NotificationControllerTest extends TestCase
     public function test_cannot_mark_other_users_notification_as_read(): void
     {
         $notification = $this->otherUser->notifications()->create([
-            'id' => 'test-notification',
+            'id' => Str::uuid()->toString(),
             'type' => 'App\Notifications\TestNotification',
             'data' => ['message' => 'Test notification'],
         ]);
@@ -132,7 +133,7 @@ class NotificationControllerTest extends TestCase
     public function test_can_mark_single_notification_as_unread(): void
     {
         $notification = $this->user->notifications()->create([
-            'id' => 'test-notification',
+            'id' => Str::uuid()->toString(),
             'type' => 'App\Notifications\TestNotification',
             'data' => ['message' => 'Test notification'],
             'read_at' => now(),
@@ -154,7 +155,7 @@ class NotificationControllerTest extends TestCase
     public function test_cannot_mark_other_users_notification_as_unread(): void
     {
         $notification = $this->otherUser->notifications()->create([
-            'id' => 'test-notification',
+            'id' => Str::uuid()->toString(),
             'type' => 'App\Notifications\TestNotification',
             'data' => ['message' => 'Test notification'],
             'read_at' => now(),

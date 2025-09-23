@@ -10,13 +10,26 @@ use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
 {
-    public function test_users_can_authenticate_using_the_login_screen(): void
+    public function test_users_can_authenticate_using_session_based_login(): void
+    {
+        $user = User::factory()->create();
+
+        $this->withHeader('Origin', 'localhost')
+            ->postJson(route('login'), [
+                'email' => $user->email,
+                'password' => 'password',
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['message']);
+    }
+
+    public function test_users_can_authenticate_using_token_based_login(): void
     {
         $user = User::factory()->create();
 
         $this->postJson(route('login'), [
             'email' => $user->email,
-            'password' => 'password',
+            'password' => 'password'
         ])
             ->assertOk()
             ->assertJsonStructure(['data']);

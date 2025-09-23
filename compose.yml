@@ -1,5 +1,7 @@
-# Development environment for Motus
-name: motus
+name: Laravel starter
+
+x-grace-period: &default-grace-period
+    stop_grace_period: 30s
 
 x-deploy: &default-deploy
     replicas: 1
@@ -10,7 +12,8 @@ x-deploy: &default-deploy
 
 services:
     api:
-        image: ghcr.io/wehomemove/motus-api
+        image: shinsenter/php:8.4-frankenphp
+        container_name: api_laravel-starter
         network_mode: host
         depends_on:
             - mailhog
@@ -31,12 +34,11 @@ services:
         volumes:
             - ./:/var/www/html:rw,z
             - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro,z
-            - ./docker/php.ini:/usr/local/etc/php/conf.d/99-custom.ini:ro,z
         environment:
             - DOCUMENT_ROOT=/public
             - DISABLE_GREETING=1
-            - APP_USER=${USER_ID:-1000}
-            - APP_GROUP=${GROUP_ID:-1000}
+            - APP_USER=n95
+            - APP_GROUP=n95
             - FIX_APP_PATH_PERMISSION=1
         develop:
             watch:
@@ -47,9 +49,9 @@ services:
                         - .git/
                         - vendor/
                         - .vscode/
-                        - node_modules/
     redis:
-        stop_grace_period: 30s
+        <<: *default-grace-period
+        container_name: redis_laravel-starter
         image: redis:7
         deploy:
             <<: *default-deploy
@@ -63,10 +65,11 @@ services:
             timeout: 3s
             retries: 5
         volumes:
-            - redis_motus:/data
+            - redis_laravel-starter:/data
     database:
+        container_name: database_laravel-starter
         stop_grace_period: 30s
-        image: imresamu/postgis:17-3.5.2-alpine3.21
+        image: postgres:17-alpine
         logging:
             options:
                 max-size: '12m'
@@ -81,17 +84,18 @@ services:
             retries: 5
             start_period: 10s
         volumes:
-            - postgres_motus:/var/lib/postgresql/data
+            - postgres_laravel-starter:/var/lib/postgresql/data
         ports:
             # expose port 5432 to host for debugging
             - "5432:5432"
         env_file:
             - .env
         environment:
-            POSTGRES_DB: 'motus'
+            POSTGRES_DB: 'laravel_starter'
             POSTGRES_HOST_AUTH_METHOD: 'trust'
     mailhog:
         image: mailhog/mailhog
+        container_name: mailhog_laravel-starter
         logging:
             driver: 'none'  # disable saving logs
         ports:
@@ -99,5 +103,5 @@ services:
             - 8025:8025 # web ui
 
 volumes:
-    postgres_motus:
-    redis_motus:
+    postgres_laravel-starter:
+    redis_laravel-starter:

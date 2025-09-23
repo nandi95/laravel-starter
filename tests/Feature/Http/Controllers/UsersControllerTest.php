@@ -21,7 +21,7 @@ class UsersControllerTest extends TestCase
         $this->admin = User::factory()->create();
         $this->setupRoles();
         $this->admin->assignRole(Role::Admin);
-        $this->regularUser = User::factory()->create(['name' => 'Regular User']);
+        $this->regularUser = User::factory()->create(['first_name' => 'Regular', 'last_name' => 'User']);
     }
 
     public function test_admin_can_list_users(): void
@@ -37,7 +37,8 @@ class UsersControllerTest extends TestCase
                 'data' => [
                     '*' => [
                         'id',
-                        'name',
+                        'first_name',
+                        'last_name',
                         'email',
                         'avatar'
                     ]
@@ -69,11 +70,11 @@ class UsersControllerTest extends TestCase
     public function test_users_are_ordered_by_name(): void
     {
         /* @var User $userA */
-        $userC = User::factory()->create(['name' => 'Charlie']);
+        $userC = User::factory()->create(['first_name' => 'Charlie', 'last_name' => '']);
         /* @var User $userB */
-        $userA = User::factory()->create(['name' => 'Alice']);
+        $userA = User::factory()->create(['first_name' => 'Alice', 'last_name' => '']);
         /* @var User $userB */
-        $userB = User::factory()->create(['name' => 'Bob']);
+        $userB = User::factory()->create(['first_name' => 'Bob', 'last_name' => '']);
 
         $userIds = $this->actingAs($this->admin)
             ->getJson(route('users'))

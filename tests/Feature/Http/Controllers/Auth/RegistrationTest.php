@@ -15,7 +15,8 @@ class RegistrationTest extends TestCase
         $role = Role::create(['name' => 'user']);
 
         $this->postJson(route('register'), [
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',

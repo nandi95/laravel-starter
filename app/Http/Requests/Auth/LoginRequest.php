@@ -27,8 +27,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'remember' => ['nullable', 'boolean'],
-            'token' => ['sometimes', 'boolean']
+            'remember' => ['nullable', 'boolean']
         ];
     }
 
@@ -43,7 +42,6 @@ class LoginRequest extends FormRequest
 
         $provider = auth()->getProvider();
 
-        $provider->validateCredentials()
         if (!$user instanceof User || !$provider->validateCredentials($user, $this->only(['password']))) {
             RateLimiter::hit($this->throttleKey());
 

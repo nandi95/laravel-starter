@@ -104,9 +104,13 @@ class OAuthController extends Controller
             }
 
             $user = DB::transaction(static function () use ($oAuthUser, $provider, &$user) {
+                $name = $oAuthUser->getName() ?? '';
+                $nameParts = explode(' ', $name, 2);
+
                 $user = User::create([
                     'avatar' => $oAuthUser->getAvatar(),
-                    'name' => $oAuthUser->getName(),
+                    'first_name' => $nameParts[0] ?? '',
+                    'last_name' => $nameParts[1] ?? '',
                     'email' => $oAuthUser->getEmail(),
                     'email_verified_at' => now(),
                     'ulid' => Str::ulid()->toBase32()

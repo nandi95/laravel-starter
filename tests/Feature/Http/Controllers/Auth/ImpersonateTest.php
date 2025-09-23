@@ -19,9 +19,9 @@ class ImpersonateTest extends TestCase
     public function test_user_must_be_admin_to_impersonate(): void
     {
         $this->setUpRoles();
-        $impersonated = User::factory()->create(['name' => 'impersonated']);
+        $impersonated = User::factory()->create(['first_name' => 'impersonated', 'last_name' => '']);
         /** @var User $impersonator */
-        $impersonator = User::factory()->create(['name' => 'impersonator']);
+        $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
 
         $this->actingAs($impersonator);
 
@@ -34,9 +34,9 @@ class ImpersonateTest extends TestCase
         $this->withoutExceptionHandling();
         $this->setUpRoles();
         /** @var User $impersonated */
-        $impersonated = User::factory()->create(['name' => 'impersonated']);
+        $impersonated = User::factory()->create(['first_name' => 'impersonated', 'last_name' => '']);
         /** @var User $impersonator */
-        $impersonator = User::factory()->create(['name' => 'impersonator']);
+        $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
 
         $impersonator->assignRole(Role::Admin);
 
@@ -53,7 +53,7 @@ class ImpersonateTest extends TestCase
 
         $this->getJson(route('user.index', $impersonated))
             ->assertOk()
-            ->assertJsonPath('data.name', 'impersonated');
+            ->assertJsonPath('data.first_name', 'impersonated');
     }
 
     public function test_it_can_stop_impersonating(): void
@@ -61,9 +61,9 @@ class ImpersonateTest extends TestCase
         $this->withoutExceptionHandling();
         $this->setUpRoles();
         /** @var User $impersonated */
-        $impersonated = User::factory()->create(['name' => 'impersonated']);
+        $impersonated = User::factory()->create(['first_name' => 'impersonated', 'last_name' => '']);
         /** @var User $impersonator */
-        $impersonator = User::factory()->create(['name' => 'impersonator']);
+        $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
 
         $this->actingAs($impersonator);
 
@@ -83,7 +83,7 @@ class ImpersonateTest extends TestCase
 
         $this->getJson(route('user.index'))
             ->assertOk()
-            ->assertJsonPath('data.name', $impersonator->name);
+            ->assertJsonPath('data.first_name', $impersonator->first_name);
     }
 
     /**

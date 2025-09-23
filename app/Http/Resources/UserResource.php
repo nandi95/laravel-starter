@@ -35,7 +35,8 @@ class UserResource extends JsonResource
 
         return [
             'id' => $this->resource->ulid,
-            'name' => $this->resource->name,
+            'first_name' => $this->resource->first_name,
+            'last_name' => $this->resource->last_name,
             'email' => $this->resource->email,
             'hasPassword' => (bool) $this->resource->password,
             'avatar' => $avatar,

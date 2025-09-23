@@ -17,13 +17,13 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 class AuthController extends Controller
 {
@@ -36,11 +36,13 @@ class AuthController extends Controller
     {
         Log::info('Starting new user registration', [
             'email' => $request->get('email'),
-            'name' => $request->get('name')
+            'first_name' => $request->get('first_name'),
+            'last_name' => $request->get('last_name')
         ]);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique(User::class, 'email')],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'newsletter' => 'boolean',
@@ -48,7 +50,8 @@ class AuthController extends Controller
 
         /** @var User $user */
         $user = User::create([
-            'name' => $request->get('name'),
+            'first_name' => $request->get('first_name'),
+            'last_name' => $request->get('last_name'),
             'email' => $request->get('email'),
             'password' => Hash::make($request->get('password')),
             'ulid' => Str::ulid()->toBase32(),
@@ -95,7 +98,7 @@ class AuthController extends Controller
         }
 
         // Check if client wants API token (mobile/third-party) or session (SPA)
-        if ($request->boolean('token')) {
+        if (!EnsureFrontendRequestsAreStateful::fromFrontend($request)) {
             $sanctumToken = $user->createToken(
                 $this->getDeviceName(),
                 ['*'],
@@ -116,7 +119,12 @@ class AuthController extends Controller
 
         // Session-based authentication for SPAs
         auth()->login($user, $request->boolean('remember'));
-        $request->session()->regenerate();
+
+        // Only regenerate session if session is available
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
         event(new Authenticated('auth:sanctum', $user));
 
         Log::info('User logged in successfully with session', [
@@ -148,8 +156,13 @@ class AuthController extends Controller
         } else {
             // Session-based logout
             auth()->logoutCurrentDevice();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
+
+            // Only invalidate session if session is available
+            if ($request->hasSession()) {
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
             Log::info('Session invalidated');
         }
 

@@ -35,7 +35,8 @@ class UserControllerTest extends TestCase
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'name',
+                    'first_name',
+                    'last_name',
                     'email',
                     'avatar',
                     'unreadNotificationsCount',
@@ -49,14 +50,16 @@ class UserControllerTest extends TestCase
     {
         $this->actingAs($this->user)
             ->patchJson(route('user.update'), [
-                'name' => 'New Name',
+                'first_name' => 'New',
+                'last_name' => 'Name',
                 'email' => 'newemail@example.com'
             ])
             ->assertOk();
 
         $this->assertDatabaseHas('users', [
             'id' => $this->user->getKey(),
-            'name' => 'New Name',
+            'first_name' => 'New',
+            'last_name' => 'Name',
             'email' => 'newemail@example.com'
         ]);
     }
@@ -65,18 +68,19 @@ class UserControllerTest extends TestCase
     {
         $this->actingAs($this->user)
             ->patchJson(route('user.update'), [
-                'name' => 'a', // Too short
+                'last_name' => 'Test',
                 'email' => 'invalid-email'
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'email']);
+            ->assertJsonValidationErrors(['first_name', 'email']);
     }
 
     public function test_cannot_use_existing_email_for_profile_update(): void
     {
         $this->actingAs($this->user)
             ->patchJson(route('user.update'), [
-                'name' => 'New Name',
+                'first_name' => 'New',
+                'last_name' => 'Name',
                 'email' => $this->otherUser->email
             ])
             ->assertUnprocessable()
@@ -89,7 +93,8 @@ class UserControllerTest extends TestCase
 
         $this->actingAs($this->user)
             ->patchJson(route('user.update'), [
-                'name' => 'New Name',
+                'first_name' => 'New',
+                'last_name' => 'Name',
                 'email' => 'newemail@example.com'
             ])
             ->assertOk();

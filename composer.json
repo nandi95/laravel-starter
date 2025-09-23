@@ -16,11 +16,11 @@
         "stevebauman/location": "^7.3"
     },
     "require-dev": {
-        "roave/security-advisories": "dev-latest",
         "barryvdh/laravel-ide-helper": "^3.1",
         "driftingly/rector-laravel": "^2.0.2",
         "fakerphp/faker": "^1.23",
         "larastan/larastan": "^v3.2.0",
+        "laravel/boost": "^1.2",
         "laravel/pint": "^1.18",
         "laravel/sail": "^1.26",
         "laravel/tinker": "^2.10",
@@ -29,8 +29,9 @@
         "phpmd/phpmd": "^2.15",
         "phpro/grumphp": "^2.8",
         "phpstan/phpstan-strict-rules": "^2.0.4",
-        "phpunit/phpunit": "^11.5.15",
-        "rector/rector": "^2.0.10"
+        "phpunit/phpunit": "^12.3.13",
+        "rector/rector": "^2.0.10",
+        "roave/security-advisories": "dev-latest"
     },
     "autoload": {
         "psr-4": {
