@@ -63,8 +63,11 @@ jobs:
           database: laravel_starter
           postgres-version: 14
 
-      - name: Update database username for CI
+      - name: Configure database for CI
         run: sed -i 's/DB_USERNAME=postgres/DB_USERNAME=runner/' .env
+
+      - name: Create testing schema
+        run: psql -d laravel_starter -c "CREATE SCHEMA IF NOT EXISTS testing;"
 
       - name: Run database migrations
         run: php artisan migrate --force
