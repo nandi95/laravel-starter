@@ -51,6 +51,13 @@ jobs:
         uses: ankane/setup-postgres@v1
         with:
           database: laravel_starter
+          postgres-version: 14
+
+      - name: Update database username for CI
+        run: sed -i 's/DB_USERNAME=postgres/DB_USERNAME=runner/' .env
+
+      - name: Run database migrations
+        run: php artisan migrate --force
 
       - name: Run tests
         run: composer test
