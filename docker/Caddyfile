@@ -6,7 +6,7 @@
 	local_certs
 }
 
-api.test.localhost {
+laravel-starter.localhost {
 	root * /var/www/html/public
 	php_server
 }
