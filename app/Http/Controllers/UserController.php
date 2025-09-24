@@ -49,16 +49,17 @@ class UserController extends Controller
 
         Log::info('Updating user profile', [
             'user_id' => $user->getKey(),
-            'fields' => array_keys($request->only(['name', 'email']))
+            'fields' => array_keys($request->only(['first_name', 'last_name', 'email']))
         ]);
 
         $request->validate([
-            'name' => ['required', 'string', 'min:3', 'max:100'],
+            'first_name' => ['required', 'string', 'min:1', 'max:100'],
+            'last_name' => ['required', 'string', 'min:1', 'max:100'],
             'email' => ['required', 'email', Rule::unique(User::class, 'email')->ignore($user)]
         ]);
 
         $email = $user->email;
-        $attributes = $request->only(['name', 'email']);
+        $attributes = $request->only(['first_name', 'last_name', 'email']);
 
         if ($email !== $request->get('email')) {
             $attributes['email_verified_at'] = null;

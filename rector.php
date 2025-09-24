@@ -7,7 +7,6 @@ use Rector\Config\RectorConfig;
 use Rector\Php81\Rector\Array_\FirstClassCallableRector;
 use Rector\Privatization\Rector\Class_\FinalizeTestCaseClassRector;
 use Rector\Transform\Rector\String_\StringToClassConstantRector;
-use Rector\TypeDeclaration\Rector\ClassMethod\AddVoidReturnTypeWhereNoReturnRector;
 use RectorLaravel\Set\LaravelLevelSetList;
 use RectorLaravel\Set\LaravelSetList;
 
@@ -50,7 +49,4 @@ return RectorConfig::configure()
         rectorPreset: true,
         phpunitCodeQuality: true
     )
-    ->withComposerBased(phpunit: true)
-    ->withRules([
-        AddVoidReturnTypeWhereNoReturnRector::class,
-    ]);
+    ->withComposerBased(phpunit: true);

@@ -123,7 +123,7 @@ class PasswordController extends Controller
             'password' => ['required', 'confirmed', PasswordRule::defaults()],
         ]);
 
-        if ($user->password && !Hash::check($request->get('current_password'), $user->password)) {
+        if ($user->password && $request->has('current_password') && !Hash::check($request->get('current_password'), $user->password)) {
             Log::warning('Invalid current password provided for password update', [
                 'user_id' => $user->getKey()
             ]);

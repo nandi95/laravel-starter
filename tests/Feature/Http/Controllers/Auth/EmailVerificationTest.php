@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers\Auth;
 
+use App\Http\Controllers\Authentication\EmailVerificationController;
 use App\Models\User;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(EmailVerificationController::class)]
 class EmailVerificationTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_email_can_be_verified(): void
     {
         $this->withoutExceptionHandling();

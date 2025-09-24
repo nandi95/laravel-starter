@@ -18,7 +18,7 @@ trait InteractsWithS3
      *     key: string,
      *     secret: string,
      *     bucket: string,
-     *     use_path_style_endpoint: boolean,
+     *     use_path_style_endpoint: bool,
      *     token: string,
      *     endpoint?: string,
      *     url?: string

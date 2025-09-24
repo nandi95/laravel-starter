@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers\Auth;
 
+use App\Http\Controllers\Authentication\PasswordController;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(PasswordController::class)]
 class PasswordResetTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_reset_password_link_can_be_requested(): void
     {
         $user = User::factory()->create();

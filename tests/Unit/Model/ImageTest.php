@@ -6,8 +6,10 @@ namespace Tests\Unit\Model;
 
 use App\Models\Image;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(Image::class)]
 class ImageTest extends TestCase
 {
     /**

@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Authentication;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\PersonalAccessTokenResource;
 use App\Models\User;
+use Illuminate\Auth\Events\OtherDeviceLogout;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -92,6 +93,7 @@ class DeviceController extends Controller
             $user->tokens()
                 ->whereKey($id)
                 ->delete();
+            event(new OtherDeviceLogout('auth:sanctum', $user));
         }
 
         return response()->json(status: Response::HTTP_NO_CONTENT);

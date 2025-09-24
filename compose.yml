@@ -1,0 +1,107 @@
+name: Laravel starter
+
+x-grace-period: &default-grace-period
+    stop_grace_period: 30s
+
+x-deploy: &default-deploy
+    replicas: 1
+    update_config:
+        parallelism: 1
+        failure_action: rollback
+        order: start-first
+
+services:
+    api:
+        image: shinsenter/php:8.4-frankenphp
+        container_name: api_laravel-starter
+        network_mode: host
+        depends_on:
+            - mailhog
+            - database
+            - redis
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost/up" ]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 10s
+        security_opt:
+            - label:disable
+        ports:
+            - "80:80"
+            - "443:443"
+            - "443:443/udp"
+        volumes:
+            - ./:/var/www/html:rw,z
+            - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro,z
+        environment:
+            - DOCUMENT_ROOT=/public
+            - DISABLE_GREETING=1
+            - APP_USER=n95
+            - APP_GROUP=n95
+            - FIX_APP_PATH_PERMISSION=1
+        develop:
+            watch:
+                -   action: sync
+                    path: .
+                    target: /var/www/html
+                    ignore:
+                        - .git/
+                        - vendor/
+                        - .vscode/
+    redis:
+        <<: *default-grace-period
+        container_name: redis_laravel-starter
+        image: redis:7
+        deploy:
+            <<: *default-deploy
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
+        command: [ "redis-server", "--appendonly", "no", "--maxmemory", "500mb", "--maxmemory-policy", "allkeys-lru" ]
+        healthcheck:
+            test: [ "CMD", "redis-cli", "ping" ]
+            interval: 1s
+            timeout: 3s
+            retries: 5
+        volumes:
+            - redis_laravel-starter:/data
+    database:
+        container_name: database_laravel-starter
+        stop_grace_period: 30s
+        image: postgres:17-alpine
+        logging:
+            options:
+                max-size: '12m'
+                max-file: '5'
+        deploy:
+            <<: *default-deploy
+        restart: unless-stopped
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER" ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        volumes:
+            - postgres_laravel-starter:/var/lib/postgresql/data
+        ports:
+            # expose port 5432 to host for debugging
+            - "5432:5432"
+        env_file:
+            - .env
+        environment:
+            POSTGRES_DB: 'laravel_starter'
+            POSTGRES_HOST_AUTH_METHOD: 'trust'
+    mailhog:
+        image: mailhog/mailhog
+        container_name: mailhog_laravel-starter
+        logging:
+            driver: 'none'  # disable saving logs
+        ports:
+            - 1025:1025 # smtp server
+            - 8025:8025 # web ui
+
+volumes:
+    postgres_laravel-starter:
+    redis_laravel-starter:

@@ -30,7 +30,8 @@ class SendRightOfAccessData implements ShouldQueue
     {
         $data = [
             'user' => $this->user->only([
-                'name',
+                'first_name',
+                'last_name',
                 'email',
                 'avatar',
             ]),

@@ -4,22 +4,35 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers\Auth;
 
+use App\Http\Controllers\Authentication\AuthController;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(AuthController::class)]
 class AuthenticationTest extends TestCase
 {
-    use RefreshDatabase;
+    public function test_users_can_authenticate_using_session_based_login(): void
+    {
+        $user = User::factory()->create();
 
-    public function test_users_can_authenticate_using_the_login_screen(): void
+        $this->withHeader('Origin', 'localhost')
+            ->postJson(route('login'), [
+                'email' => $user->email,
+                'password' => 'password',
+            ])
+            ->assertOk()
+            ->assertJsonStructure(['message']);
+    }
+
+    public function test_users_can_authenticate_using_token_based_login(): void
     {
         $user = User::factory()->create();
 
         $this->postJson(route('login'), [
             'email' => $user->email,
-            'password' => 'password',
+            'password' => 'password'
         ])
             ->assertOk()
             ->assertJsonStructure(['data']);

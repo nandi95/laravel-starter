@@ -6,8 +6,9 @@ namespace App\Http\Requests\Auth;
 
 use App\Http\Requests\FormRequest;
 use App\Models\User;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Lockout;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Events\Validated;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -39,13 +40,19 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (!$user instanceof \App\Models\User || !Hash::check($this->get('password'), $user->password)) {
+        $provider = auth()->getProvider();
+
+        if (!$user instanceof User || !$provider->validateCredentials($user, $this->only(['password']))) {
             RateLimiter::hit($this->throttleKey());
 
+            event(new Failed('auth:sanctum', $user, $this->only(['email', 'password'])));
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
         }
+
+        event(new Validated('auth:sanctum', $user));
+        $provider->rehashPasswordIfRequired($user, $this->only(['password']));
 
         RateLimiter::clear($this->throttleKey());
     }

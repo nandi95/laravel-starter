@@ -16,15 +16,25 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
       cancel-in-progress: true
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Setup PHP with tools
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
+          php-version: 8.4
           tools: composer
 
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Configure composer
         run: composer config github-oauth.github.com ${{ secrets.COMPOSER_AUTH }}
@@ -34,7 +44,7 @@ jobs:
 
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
@@ -47,16 +57,26 @@ jobs:
       - name: Generate key
         run: php artisan key:generate
 
-      - name: Set up database
-        uses: ankane/setup-mariadb@v1
+      - name: Set up PostgreSQL
+        uses: ankane/setup-postgres@v1
         with:
-          database: api-template-test
+          database: laravel_starter
+          postgres-version: 14
+
+      - name: Configure database for CI
+        run: sed -i 's/DB_USERNAME=postgres/DB_USERNAME=runner/' .env
+
+      - name: Create testing schema
+        run: psql -d laravel_starter -c "CREATE SCHEMA IF NOT EXISTS testing;"
+
+      - name: Run database migrations
+        run: php artisan migrate --force
 
       - name: Run tests
         run: composer test
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: Logs

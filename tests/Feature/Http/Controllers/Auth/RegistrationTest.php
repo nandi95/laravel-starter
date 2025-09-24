@@ -4,21 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers\Auth;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Http\Controllers\Authentication\AuthController;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
+#[CoversClass(AuthController::class)]
 class RegistrationTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_new_users_can_register(): void
     {
         $this->withoutExceptionHandling();
         $role = Role::create(['name' => 'user']);
 
         $this->postJson(route('register'), [
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',

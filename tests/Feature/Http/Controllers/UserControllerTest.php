@@ -5,18 +5,18 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers;
 
 use App\Enums\AssetType;
+use App\Http\Controllers\UserController;
 use App\Jobs\MoveFile;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(UserController::class)]
 class UserControllerTest extends TestCase
 {
-    use RefreshDatabase;
-
     private User $user;
 
     private User $otherUser;
@@ -38,7 +38,8 @@ class UserControllerTest extends TestCase
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'name',
+                    'first_name',
+                    'last_name',
                     'email',
                     'avatar',
                     'unreadNotificationsCount',
@@ -52,14 +53,16 @@ class UserControllerTest extends TestCase
     {
         $this->actingAs($this->user)
             ->patchJson(route('user.update'), [
-                'name' => 'New Name',
+                'first_name' => 'New',
+                'last_name' => 'Name',
                 'email' => 'newemail@example.com'
             ])
             ->assertOk();
 
         $this->assertDatabaseHas('users', [
             'id' => $this->user->getKey(),
-            'name' => 'New Name',
+            'first_name' => 'New',
+            'last_name' => 'Name',
             'email' => 'newemail@example.com'
         ]);
     }
@@ -68,18 +71,19 @@ class UserControllerTest extends TestCase
     {
         $this->actingAs($this->user)
             ->patchJson(route('user.update'), [
-                'name' => 'a', // Too short
+                'last_name' => 'Test',
                 'email' => 'invalid-email'
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['name', 'email']);
+            ->assertJsonValidationErrors(['first_name', 'email']);
     }
 
     public function test_cannot_use_existing_email_for_profile_update(): void
     {
         $this->actingAs($this->user)
             ->patchJson(route('user.update'), [
-                'name' => 'New Name',
+                'first_name' => 'New',
+                'last_name' => 'Name',
                 'email' => $this->otherUser->email
             ])
             ->assertUnprocessable()
@@ -92,7 +96,8 @@ class UserControllerTest extends TestCase
 
         $this->actingAs($this->user)
             ->patchJson(route('user.update'), [
-                'name' => 'New Name',
+                'first_name' => 'New',
+                'last_name' => 'Name',
                 'email' => 'newemail@example.com'
             ])
             ->assertOk();
