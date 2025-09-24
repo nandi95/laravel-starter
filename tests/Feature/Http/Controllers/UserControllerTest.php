@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers;
 
 use App\Enums\AssetType;
+use App\Http\Controllers\UserController;
 use App\Jobs\MoveFile;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(UserController::class)]
 class UserControllerTest extends TestCase
 {
     private User $user;

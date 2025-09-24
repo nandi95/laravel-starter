@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers\Auth;
 
 use App\Enums\Role;
+use App\Http\Controllers\Authentication\ImpersonateController;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(ImpersonateController::class)]
 class ImpersonateTest extends TestCase
 {
     public function test_it_requires_authentication(): void

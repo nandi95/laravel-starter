@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers;
 
 use App\Enums\Role;
+use App\Http\Controllers\UsersController;
 use App\Models\User;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(UsersController::class)]
 class UsersControllerTest extends TestCase
 {
     private User $admin;

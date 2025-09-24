@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers\Auth;
 
+use App\Http\Controllers\Authentication\AuthController;
 use App\Models\User;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(AuthController::class)]
 class AuthenticationTest extends TestCase
 {
     public function test_users_can_authenticate_using_session_based_login(): void

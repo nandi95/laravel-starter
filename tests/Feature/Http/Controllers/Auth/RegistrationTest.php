@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers\Auth;
 
+use App\Http\Controllers\Authentication\AuthController;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
+#[CoversClass(AuthController::class)]
 class RegistrationTest extends TestCase
 {
     public function test_new_users_can_register(): void

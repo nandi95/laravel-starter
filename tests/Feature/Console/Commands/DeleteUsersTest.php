@@ -10,8 +10,10 @@ use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\PersonalAccessToken;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(DeleteUsers::class)]
 class DeleteUsersTest extends TestCase
 {
     public function test_it_should_check_argument_type(): void

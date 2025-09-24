@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers\Auth;
 
+use App\Http\Controllers\Authentication\DeviceController;
 use App\Models\User;
 use Illuminate\Support\Facades\Crypt;
 use Laravel\Sanctum\PersonalAccessToken;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(DeviceController::class)]
 class DeviceControllerTest extends TestCase
 {
     public function test_user_can_retrieve_devices(): void

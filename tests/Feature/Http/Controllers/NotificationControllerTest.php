@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Http\Controllers;
 
+use App\Http\Controllers\NotificationController;
 use App\Models\User;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(NotificationController::class)]
 class NotificationControllerTest extends TestCase
 {
     private User $user;

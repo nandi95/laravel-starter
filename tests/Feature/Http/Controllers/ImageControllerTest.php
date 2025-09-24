@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Tests\Feature\Http\Controllers;
 
 use App\Enums\Role;
+use App\Http\Controllers\ImageController;
 use App\Jobs\DeleteFile;
 use App\Models\Image;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
+use PHPUnit\Framework\Attributes\CoversClass;
 use Tests\TestCase;
 
+#[CoversClass(ImageController::class)]
 class ImageControllerTest extends TestCase
 {
     private User $user;
