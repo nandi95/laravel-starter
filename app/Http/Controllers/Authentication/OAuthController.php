@@ -103,7 +103,7 @@ class OAuthController extends Controller
                 ]);
             }
 
-            $user = DB::transaction(static function () use ($oAuthUser, $provider, &$user) {
+            $user = DB::transaction(static function () use ($oAuthUser, $provider) {
                 $name = $oAuthUser->getName() ?? '';
                 $nameParts = explode(' ', $name, 2);
 
@@ -132,7 +132,7 @@ class OAuthController extends Controller
                 return $user;
             });
         } else {
-            $user = $userProvider->user;
+            $user = $userProvider->user()->withTrashed()->first();
             Log::debug('Existing OAuth user authenticated', [
                 'user_id' => $user->getKey(),
                 'provider' => $provider->value
@@ -153,8 +153,6 @@ class OAuthController extends Controller
             ['*'],
             now()->addMonth()
         );
-
-        $sanctumToken->accessToken->save();
 
         Log::info('OAuth authentication successful', [
             'user_id' => $user->getKey(),

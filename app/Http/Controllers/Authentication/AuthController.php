@@ -149,7 +149,7 @@ class AuthController extends Controller
         ]);
 
         // If user is authenticated via token, delete the current token
-        if ($user->currentAccessToken()) {
+        if (!EnsureFrontendRequestsAreStateful::fromFrontend($request)) {
             $user->currentAccessToken()->delete();
             event(new CurrentDeviceLogout('auth:sanctum', $user));
             Log::info('API token revoked');
