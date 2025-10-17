@@ -2,7 +2,10 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.3",
@@ -13,6 +16,7 @@
         "laravel/socialite": "^5.16",
         "league/flysystem-aws-s3-v3": "^3.29",
         "matomo/device-detector": "^6.4",
+        "propaganistas/laravel-disposable-email": "^2.4",
         "spatie/laravel-permission": "^6.9",
         "stevebauman/location": "^7.3"
     },
