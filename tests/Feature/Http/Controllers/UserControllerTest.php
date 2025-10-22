@@ -6,8 +6,15 @@ use App\Enums\AssetType;
 use App\Jobs\MoveFile;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
+
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\getJson;
+use function Pest\Laravel\patchJson;
+use function Pest\Laravel\postJson;
 
 beforeEach(function (): void {
     $this->user = User::factory()->create();
@@ -15,7 +22,7 @@ beforeEach(function (): void {
     Bus::fake();
 });
 test('can get authenticated user details', function (): void {
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->getJson(route('user.index'))
         ->assertOk()
         ->assertJsonStructure([
@@ -32,7 +39,7 @@ test('can get authenticated user details', function (): void {
         ]);
 });
 test('can update user profile', function (): void {
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->patchJson(route('user.update'), [
             'first_name' => 'New',
             'last_name' => 'Name',
@@ -40,7 +47,7 @@ test('can update user profile', function (): void {
         ])
         ->assertOk();
 
-    $this->assertDatabaseHas('users', [
+    assertDatabaseHas('users', [
         'id' => $this->user->getKey(),
         'first_name' => 'New',
         'last_name' => 'Name',
@@ -48,7 +55,7 @@ test('can update user profile', function (): void {
     ]);
 });
 test('validates profile update request', function (): void {
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->patchJson(route('user.update'), [
             'last_name' => 'Test',
             'email' => 'invalid-email'
@@ -57,7 +64,7 @@ test('validates profile update request', function (): void {
         ->assertJsonValidationErrors(['first_name', 'email']);
 });
 test('cannot use existing email for profile update', function (): void {
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->patchJson(route('user.update'), [
             'first_name' => 'New',
             'last_name' => 'Name',
@@ -69,7 +76,7 @@ test('cannot use existing email for profile update', function (): void {
 test('email verification is reset when email changes', function (): void {
     $this->user->markEmailAsVerified();
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->patchJson(route('user.update'), [
             'first_name' => 'New',
             'last_name' => 'Name',
@@ -77,7 +84,7 @@ test('email verification is reset when email changes', function (): void {
         ])
         ->assertOk();
 
-    $this->assertNotInstanceOf(\Illuminate\Support\Carbon::class, $this->user->fresh()->email_verified_at);
+    $this->assertNotInstanceOf(Carbon::class, $this->user->fresh()->email_verified_at);
 });
 test('can update user avatar', function (): void {
     $file = UploadedFile::fake()->create('avatar.jpg', 100, 'image/jpeg');
@@ -87,7 +94,7 @@ test('can update user avatar', function (): void {
     Storage::shouldReceive('url')
         ->andReturn('http://example.com/tmp/' . $file->name);
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->postJson(route('user.avatar'), [
             'key' => 'tmp/' . $file->name,
             'title' => 'Avatar',
@@ -100,7 +107,7 @@ test('can update user avatar', function (): void {
             'data'
         ]);
 
-    $this->assertDatabaseHas('users', [
+    assertDatabaseHas('users', [
         'id' => $this->user->getKey(),
         'avatar' => 'user/' . $this->user->ulid . '/' . AssetType::Image->value . 's/' . $file->name
     ]);
@@ -118,7 +125,7 @@ test('deletes old avatar when updating', function (): void {
     Storage::shouldReceive('url')
         ->andReturn('http://example.com/tmp/' . $file->name);
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->postJson(route('user.avatar'), [
             'key' => 'tmp/' . $file->name,
             'title' => 'Avatar',
@@ -131,13 +138,13 @@ test('deletes old avatar when updating', function (): void {
     Bus::assertDispatched(\App\Jobs\DeleteFile::class, fn ($job): bool => $job->path === $oldPath);
 });
 test('validates avatar update request', function (): void {
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->postJson(route('user.avatar'), ['size' => 123, 'width' => 800, 'height' => 600])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['key']);
 });
 test('requires authentication for all routes', function (): void {
-    $this->getJson(route('user.index'))->assertUnauthorized();
-    $this->patchJson(route('user.update'))->assertUnauthorized();
-    $this->postJson(route('user.avatar'))->assertUnauthorized();
+    getJson(route('user.index'))->assertUnauthorized();
+    patchJson(route('user.update'))->assertUnauthorized();
+    postJson(route('user.avatar'))->assertUnauthorized();
 });

@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 use Spatie\Permission\Models\Role;
 
+use function Pest\Laravel\postJson;
+use function Pest\Laravel\withoutExceptionHandling;
+
 test('new users can register', function (): void {
-    $this->withoutExceptionHandling();
+    withoutExceptionHandling();
     $role = Role::create(['name' => 'user']);
 
-    $this->postJson(route('register'), [
+    postJson(route('register'), [
         'first_name' => 'Test',
         'last_name' => 'User',
         'email' => 'test@example.com',

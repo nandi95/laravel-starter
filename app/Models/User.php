@@ -88,7 +88,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * {@inheritDoc}
      */
     #[\Override]
-    public function uniqueIds()
+    public function uniqueIds(): array
     {
         return ['ulid'];
     }
@@ -97,7 +97,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * {@inheritDoc}
      */
     #[\Override]
-    public function getRouteKeyName()
+    public function getRouteKeyName(): string
     {
         return 'ulid';
     }

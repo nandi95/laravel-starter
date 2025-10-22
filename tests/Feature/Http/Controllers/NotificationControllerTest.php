@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Models\User;
 use Illuminate\Support\Str;
 
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseMissing;
+
 beforeEach(function (): void {
     $this->user = User::factory()->create();
     $this->otherUser = User::factory()->create();
@@ -23,7 +26,7 @@ test('can list notifications', function (): void {
         'data' => ['message' => 'Test notification 2'],
     ]);
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->getJson(route('notifications.index'))
         ->assertOk()
         ->assertJsonStructure([
@@ -49,7 +52,7 @@ test('can list notifications with custom per page', function (): void {
         ]);
     }
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->getJson(route('notifications.index', ['per_page' => 5]))
         ->assertOk()
         ->assertJsonCount(5, 'data');
@@ -68,11 +71,11 @@ test('can mark all notifications as read', function (): void {
         'data' => ['message' => 'Test notification 2'],
     ]);
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->postJson(route('notifications.mark-all-read'))
         ->assertNoContent();
 
-    $this->assertDatabaseMissing('notifications', [
+    assertDatabaseMissing('notifications', [
         'notifiable_id' => $this->user->getKey(),
         'read_at' => null,
     ]);
@@ -84,7 +87,7 @@ test('can mark single notification as read', function (): void {
         'data' => ['message' => 'Test notification'],
     ]);
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->patchJson(route('notifications.mark-read', $notification))
         ->assertOk()
         ->assertJsonStructure([
@@ -103,7 +106,7 @@ test('cannot mark other users notification as read', function (): void {
         'data' => ['message' => 'Test notification'],
     ]);
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->patchJson(route('notifications.mark-read', $notification))
         ->assertForbidden();
 });
@@ -115,7 +118,7 @@ test('can mark single notification as unread', function (): void {
         'read_at' => now(),
     ]);
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->patchJson(route('notifications.mark-unread', $notification))
         ->assertOk()
         ->assertJsonStructure([
@@ -135,7 +138,7 @@ test('cannot mark other users notification as unread', function (): void {
         'read_at' => now(),
     ]);
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->patchJson(route('notifications.mark-unread', $notification))
         ->assertForbidden();
 });

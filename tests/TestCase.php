@@ -19,7 +19,7 @@ abstract class TestCase extends BaseTestCase
     protected ?string $token = null;
 
     /**
-     * @param  User&UserContract  $user
+     * @param  User  $user
      */
     #[\Override]
     public function actingAs(UserContract $user, $guard = null): static

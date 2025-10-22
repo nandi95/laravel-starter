@@ -40,7 +40,7 @@ jobs:
         run: composer config github-oauth.github.com ${{ secrets.COMPOSER_AUTH }}
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress --no-ansi --no-scripts
+        run: composer install --prefer-dist --no-interaction --no-progress --no-ansi --no-scripts --optimize-autoloader
 
       - name: Cache Composer packages
         id: composer-cache
@@ -72,8 +72,11 @@ jobs:
       - name: Run database migrations
         run: php artisan migrate --force
 
-      - name: Run tests
-        run: composer test
+      - name: Run Integration tests
+        run: composer test -- --ci --group=integration
+
+      - name: Run Unit tests
+        run: composer test -- --ci --group=unit
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

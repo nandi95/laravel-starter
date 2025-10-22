@@ -15,6 +15,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,7 @@ class OAuthController extends Controller
     /**
      * Redirect to provider for authentication
      */
-    public function redirect(Request $request, OauthProvider $provider)
+    public function redirect(Request $request, OauthProvider $provider): RedirectResponse
     {
         Log::debug('OAuth redirect initiated', [
             'provider' => $provider->value

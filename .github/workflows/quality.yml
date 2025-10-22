@@ -30,7 +30,7 @@ jobs:
         run: composer config github-oauth.github.com ${{ secrets.COMPOSER_AUTH }}
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --no-scripts
+        run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --no-scripts --optimize-autoloader
 
       - name: Cache Composer packages
         id: composer-cache
@@ -40,6 +40,12 @@ jobs:
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-php-
+
+      - name: Check type coverage
+        run: composer type-coverage -- --ci
+
+      - name: Check for profanity
+        run: composer profanity-check -- --ci
 
       - name: Run code sniffer
         run: composer sniff

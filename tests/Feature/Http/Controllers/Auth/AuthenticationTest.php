@@ -5,10 +5,13 @@ declare(strict_types=1);
 use App\Models\User;
 use Illuminate\Support\Str;
 
+use function Pest\Laravel\postJson;
+use function Pest\Laravel\withHeader;
+
 test('users can authenticate using session based login', function (): void {
     $user = User::factory()->create();
 
-    $this->withHeader('Origin', 'localhost')
+    withHeader('Origin', 'localhost')
         ->postJson(route('login'), [
             'email' => $user->email,
             'password' => 'password',
@@ -19,7 +22,7 @@ test('users can authenticate using session based login', function (): void {
 test('users can authenticate using token based login', function (): void {
     $user = User::factory()->create();
 
-    $this->postJson(route('login'), [
+    postJson(route('login'), [
         'email' => $user->email,
         'password' => 'password'
     ])
@@ -29,7 +32,7 @@ test('users can authenticate using token based login', function (): void {
 test('users can not authenticate with invalid password', function (): void {
     $user = User::factory()->create();
 
-    $this->postJson(route('login'), [
+    postJson(route('login'), [
         'email' => $user->email,
         'password' => 'wrong-password',
     ])
@@ -42,7 +45,7 @@ test('users can logout', function (): void {
 
     $token = $user->createToken('test-token')->plainTextToken;
 
-    $this->postJson(route('logout'), [], [
+    postJson(route('logout'), [], [
         'Authorization' => 'Bearer ' . $token,
     ])
         ->assertNoContent();

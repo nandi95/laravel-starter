@@ -10,6 +10,10 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
 
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseMissing;
+
 beforeEach(function (): void {
     $this->user = User::factory()->create();
     $this->setupRoles();
@@ -20,7 +24,7 @@ beforeEach(function (): void {
 test('can list images', function (): void {
     Image::factory()->count(3)->create();
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->getJson(route('images.index'))
         ->assertOk()
         ->assertJsonStructure([
@@ -49,7 +53,7 @@ test('can store new image', function (): void {
     Storage::shouldReceive('mimeType')
         ->andReturn('image/jpeg');
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->postJson(route('images.store'), [
             'key' => 'tmp/' . $file->name,
             'title' => 'Test Image',
@@ -68,7 +72,7 @@ test('can store new image', function (): void {
             ]
         ]);
 
-    $this->assertDatabaseHas('images', [
+    assertDatabaseHas(Image::class, [
         'title' => 'Test Image',
         'mime_type' => 'image/jpeg',
     ]);
@@ -76,7 +80,7 @@ test('can store new image', function (): void {
 test('can update image title', function (): void {
     $image = Image::factory()->create();
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->putJson(route('images.update', $image), [
             'title' => 'Updated Title'
         ])
@@ -96,7 +100,7 @@ test('can update image title', function (): void {
             ]
         ]);
 
-    $this->assertDatabaseHas('images', [
+    assertDatabaseHas(Image::class, [
         'id' => $image->getKey(),
         'title' => 'Updated Title'
     ]);
@@ -105,11 +109,11 @@ test('cannot delete image that is in use', function (): void {
     $this->markTestIncomplete('The imageables morph needs to be updated with real values');
     $image = Image::factory()->create();
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->deleteJson(route('images.destroy', $image))
         ->assertForbidden();
 
-    $this->assertDatabaseHas('images', [
+    assertDatabaseHas(Image::class, [
         'id' => $image->getKey()
     ]);
 
@@ -119,18 +123,18 @@ test('can delete unused image', function (): void {
     $this->markTestIncomplete('The imageables morph needs to be updated with real values');
     $image = Image::factory()->create();
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->deleteJson(route('images.destroy', $image))
         ->assertNoContent();
 
-    $this->assertDatabaseMissing('images', [
+    assertDatabaseMissing('images', [
         'id' => $image->getKey()
     ]);
 
     Bus::assertDispatched(DeleteFile::class, static fn ($job): bool => $job->path === $image->storage_location);
 });
 test('validates image store request', function (): void {
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->postJson(route('images.store'), [])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['size']);
@@ -138,7 +142,7 @@ test('validates image store request', function (): void {
 test('validates image update request', function (): void {
     $image = Image::factory()->create();
 
-    $this->actingAs($this->user)
+    actingAs($this->user)
         ->putJson(route('images.update', $image), [])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['title']);

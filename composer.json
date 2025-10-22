@@ -10,6 +10,7 @@
     "require": {
         "php": "^8.3",
         "ext-redis": "*",
+        "ext-intl": "*",
         "laravel/framework": "^v12.4.1",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.16",
@@ -32,6 +33,9 @@
         "nunomaduro/collision": "^8.0",
         "pestphp/pest": "^4.1",
         "pestphp/pest-plugin-drift": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "pestphp/pest-plugin-profanity": "^4.1",
+        "pestphp/pest-plugin-type-coverage": "^4.0",
         "phpmd/phpmd": "^2.15",
         "phpro/grumphp": "^2.8",
         "phpstan/phpstan-strict-rules": "^2.0.4",
@@ -85,6 +89,12 @@
         ],
         "rector": [
             "./vendor/bin/rector"
+        ],
+        "type-coverage": [
+            "./vendor/bin/pest --type-coverage --compact"
+        ],
+        "profanity-check": [
+            "/vendor/bin/pest --profanity"
         ]
     },
     "extra": {

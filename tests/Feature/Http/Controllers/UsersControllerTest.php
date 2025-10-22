@@ -5,6 +5,9 @@ declare(strict_types=1);
 use App\Enums\Role;
 use App\Models\User;
 
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\getJson;
+
 beforeEach(function (): void {
     $this->admin = User::factory()->create();
     $this->setupRoles();
@@ -15,7 +18,7 @@ test('admin can list users', function (): void {
     // Create some regular users
     User::factory()->count(3)->create();
 
-    $this->actingAs($this->admin)
+    actingAs($this->admin)
         ->getJson(route('users'))
         ->assertOk()
         ->assertJsonCount(3 + 1, 'data')
@@ -41,7 +44,7 @@ test('admin cannot see other admins in list', function (): void {
     // Create some regular users
     User::factory()->count(3)->create();
 
-    $response = $this->actingAs($this->admin)
+    $response = actingAs($this->admin)
         ->getJson(route('users'))
         ->assertOk();
 
@@ -60,7 +63,7 @@ test('users are ordered by name', function (): void {
     /* @var User $userB */
     $userB = User::factory()->create(['first_name' => 'Bob', 'last_name' => '']);
 
-    $userIds = $this->actingAs($this->admin)
+    $userIds = actingAs($this->admin)
         ->getJson(route('users'))
         ->assertOk()
         ->json('data.*.id');
@@ -68,19 +71,19 @@ test('users are ordered by name', function (): void {
     expect($userIds)->toEqual([$userA->ulid, $userB->ulid, $userC->ulid, $this->regularUser->ulid]);
 });
 test('regular users cannot list users', function (): void {
-    $this->actingAs($this->regularUser)
+    actingAs($this->regularUser)
         ->getJson(route('users'))
         ->assertForbidden();
 });
 test('unauthenticated users cannot list users', function (): void {
-    $this->getJson(route('users'))
+    getJson(route('users'))
         ->assertUnauthorized();
 });
 test('pagination works correctly', function (): void {
     // Create 15 users
     User::factory()->count(15)->create();
 
-    $response = $this->actingAs($this->admin)
+    $response = actingAs($this->admin)
         ->getJson(route('users'))
         ->assertOk();
 

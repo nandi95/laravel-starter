@@ -6,25 +6,28 @@ use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
 
+use function Pest\Laravel\postJson;
+use function Pest\Laravel\withoutExceptionHandling;
+
 test('reset password link can be requested', function (): void {
     $user = User::factory()->create();
 
-    $this->postJson(route('password.email'), ['email' => $user->email])
+    postJson(route('password.email'), ['email' => $user->email])
         ->assertOk()
         ->assertExactJson([
             'message' => __('We have emailed your password reset link.'),
         ]);
 });
 test('password can be reset with valid token', function (): void {
-    $this->withoutExceptionHandling();
+    withoutExceptionHandling();
     Notification::fake();
 
     $user = User::factory()->create();
 
-    $this->postJson(route('password.email'), ['email' => $user->email]);
+    postJson(route('password.email'), ['email' => $user->email]);
 
     Notification::assertSentTo($user, ResetPassword::class, function (object $notification) use ($user): bool {
-        $this->postJson(route('password.store'), [
+        postJson(route('password.store'), [
             'token' => $notification->token,
             'email' => $user->email,
             'password' => 'password',

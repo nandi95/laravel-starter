@@ -7,10 +7,11 @@ namespace App\Console\Commands;
 use App\Jobs\DeleteFile;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class DeleteUsers extends Command
+class DeleteUsersCommand extends Command
 {
     /**
      * The name and signature of the console command.
@@ -45,7 +46,7 @@ class DeleteUsers extends Command
 
         User::onlyTrashed()
             ->where('deleted_at', '<=', now()->subDays((int) $this->option('days')))
-            ->when(!empty($this->argument('user')), function ($query): void {
+            ->when(!empty($this->argument('user')), function (Builder $query): void {
                 $query->whereIn('id', $this->argument('user'));
             })
             ->each(function (User $user) use (&$userCount): void {

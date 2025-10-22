@@ -2,16 +2,21 @@
 
 declare(strict_types=1);
 
-use App\Console\Commands\DeleteUsers;
+use App\Console\Commands\DeleteUsersCommand;
 use App\Jobs\DeleteFile;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\PersonalAccessToken;
 
+use function Pest\Laravel\artisan;
+use function Pest\Laravel\assertDatabaseCount;
+use function Pest\Laravel\assertDatabaseEmpty;
+use function Pest\Laravel\assertDatabaseHas;
+
 test('it should check argument type', function (): void {
-    $this->artisan(DeleteUsers::class, ['--days' => 'not numeric'])
-        ->assertExitCode(DeleteUsers::INVALID);
+    artisan(DeleteUsersCommand::class, ['--days' => 'not numeric'])
+        ->assertExitCode(DeleteUsersCommand::INVALID);
 });
 test('it should delete users and related resources', function (): void {
     Storage::fake();
@@ -22,28 +27,28 @@ test('it should delete users and related resources', function (): void {
     Storage::put('avatar.jpg', 'avatar.jpg');
     $user->createToken('test-token');
 
-    $this->assertDatabaseCount(PersonalAccessToken::class, 1);
+    assertDatabaseCount(PersonalAccessToken::class, 1);
     Storage::assertExists('avatar.jpg');
-    $this->assertDatabaseCount(User::class, 1);
+    assertDatabaseCount(User::class, 1);
 
-    $this->artisan(DeleteUsers::class)->assertExitCode(DeleteUsers::SUCCESS);
+    artisan(DeleteUsersCommand::class)->assertExitCode(DeleteUsersCommand::SUCCESS);
 
-    $this->assertDatabaseEmpty(User::class);
+    assertDatabaseEmpty(User::class);
     Storage::assertMissing('avatar.jpg');
-    $this->assertDatabaseEmpty(PersonalAccessToken::class);
+    assertDatabaseEmpty(PersonalAccessToken::class);
 });
 test('it should only delete specific users', function (): void {
     $users = User::factory()->count(3)->create([
         'deleted_at' => now()->subDays(60),
     ]);
 
-    $this->assertDatabaseCount(User::class, 3);
+    assertDatabaseCount(User::class, 3);
 
-    $this->artisan(DeleteUsers::class, ['user' => [$users->modelKeys()[0], $users->modelKeys()[1]]])
-        ->assertExitCode(DeleteUsers::SUCCESS);
+    artisan(DeleteUsersCommand::class, ['user' => [$users->modelKeys()[0], $users->modelKeys()[1]]])
+        ->assertExitCode(DeleteUsersCommand::SUCCESS);
 
-    $this->assertDatabaseCount(User::class, 1);
-    $this->assertDatabaseHas(User::class, ['id' => $users->modelKeys()[2]]);
+    assertDatabaseCount(User::class, 1);
+    assertDatabaseHas(User::class, ['id' => $users->modelKeys()[2]]);
 });
 test('storage deletion is queued', function (): void {
     Queue::fake();
@@ -52,7 +57,7 @@ test('storage deletion is queued', function (): void {
         'avatar' => 'avatar.jpg',
     ]);
 
-    $this->artisan(DeleteUsers::class)->assertExitCode(DeleteUsers::SUCCESS);
+    artisan(DeleteUsersCommand::class)->assertExitCode(DeleteUsersCommand::SUCCESS);
 
     Queue::assertPushed(DeleteFile::class, 1);
 });

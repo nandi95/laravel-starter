@@ -7,8 +7,11 @@ use Illuminate\Auth\Events\Verified;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\URL;
 
+use function Pest\Laravel\getJson;
+use function Pest\Laravel\withoutExceptionHandling;
+
 test('email can be verified', function (): void {
-    $this->withoutExceptionHandling();
+    withoutExceptionHandling();
 
     /** @var User $user */
     $user = User::factory()->create(['email_verified_at' => null]);
@@ -22,7 +25,7 @@ test('email can be verified', function (): void {
         false
     );
 
-    $this->getJson($verificationUrl)
+    getJson($verificationUrl)
         ->assertExactJson(['message' => 'Email verified!']);
 
     Event::assertDispatched(Verified::class);
@@ -37,7 +40,7 @@ test('email is not verified with invalid hash', function (): void {
         ['user' => $user->ulid, 'hash' => sha1('wrong-email')]
     );
 
-    $this->getJson($verificationUrl);
+    getJson($verificationUrl);
 
     expect($user->fresh()->hasVerifiedEmail())->toBeFalse();
 });

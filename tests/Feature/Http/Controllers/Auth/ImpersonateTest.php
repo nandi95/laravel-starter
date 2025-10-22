@@ -6,8 +6,13 @@ use App\Enums\Role;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\getJson;
+use function Pest\Laravel\postJson;
+use function Pest\Laravel\withHeader;
+
 test('it requires authentication', function (): void {
-    $this->postJson(route('impersonate', 1))->assertUnauthorized();
+    postJson(route('impersonate', 1))->assertUnauthorized();
 });
 
 test('user must be admin to impersonate', function (): void {
@@ -17,9 +22,9 @@ test('user must be admin to impersonate', function (): void {
     /** @var User $impersonator */
     $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
 
-    $this->actingAs($impersonator);
+    actingAs($impersonator);
 
-    $this->postJson(route('impersonate', $impersonated))
+    postJson(route('impersonate', $impersonated))
         ->assertForbidden();
 });
 
@@ -34,9 +39,9 @@ test('it can successfully impersonate by admin', function (): void {
 
     $impersonator->assignRole(Role::Admin);
 
-    $this->actingAs($impersonator);
+    actingAs($impersonator);
 
-    $newToken = $this->postJson(route('impersonate', $impersonated))
+    $newToken = postJson(route('impersonate', $impersonated))
         ->assertOk()
         ->json('data');
 
@@ -45,7 +50,7 @@ test('it can successfully impersonate by admin', function (): void {
 
     expect(PersonalAccessToken::findToken($newToken)->is($accessToken))->toBeTrue();
 
-    $this->getJson(route('user.index', $impersonated))
+    getJson(route('user.index', $impersonated))
         ->assertOk()
         ->assertJsonPath('data.first_name', 'impersonated');
 });
@@ -59,7 +64,7 @@ test('it can stop impersonating', function (): void {
     /** @var User $impersonator */
     $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
 
-    $this->actingAs($impersonator);
+    actingAs($impersonator);
 
     $impersonator->assignRole(Role::Admin);
 
@@ -68,14 +73,14 @@ test('it can stop impersonating', function (): void {
         ->json('data');
 
     $this->app['auth']->forgetUser();
-    $oldToken = $this->withHeader('Authorization', "Bearer $impersonatedToken")
+    $oldToken = withHeader('Authorization', "Bearer $impersonatedToken")
         ->deleteJson(route('impersonate.stop'))
         ->assertOk()
         ->json('data');
 
     $this->token = $oldToken;
 
-    $this->getJson(route('user.index'))
+    getJson(route('user.index'))
         ->assertOk()
         ->assertJsonPath('data.first_name', $impersonator->first_name);
 });
