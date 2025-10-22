@@ -11,9 +11,9 @@ trait ParsesDevice
 {
     protected function getDeviceName(): string
     {
-        $dd = new DeviceDetector(request()?->userAgent(), ClientHints::factory(request()?->server()));
-        $dd->parse();
+        $deviceDetector = new DeviceDetector(request()?->userAgent(), ClientHints::factory(request()?->server()));
+        $deviceDetector->parse();
 
-        return $dd->getDeviceName() . ' / ' . $dd->getClient('name') . ' ' . $dd->getClient('version');
+        return $deviceDetector->getDeviceName() . ' / ' . $deviceDetector->getClient('name') . ' ' . $deviceDetector->getClient('version');
     }
 }
