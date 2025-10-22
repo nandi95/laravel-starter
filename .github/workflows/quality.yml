@@ -47,8 +47,8 @@ jobs:
       - name: Check for profanity
         run: composer profanity-check -- --ci
 
-      - name: Run code sniffer
-        run: composer sniff
+      - name: Run linter
+        run: composer lint -- --bail
 
       - name: Run mess detector
         run: composer php-md
