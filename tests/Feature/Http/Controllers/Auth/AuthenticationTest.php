@@ -2,64 +2,48 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Http\Controllers\Auth;
-
-use App\Http\Controllers\Authentication\AuthController;
 use App\Models\User;
 use Illuminate\Support\Str;
-use PHPUnit\Framework\Attributes\CoversClass;
-use Tests\TestCase;
 
-#[CoversClass(AuthController::class)]
-class AuthenticationTest extends TestCase
-{
-    public function test_users_can_authenticate_using_session_based_login(): void
-    {
-        $user = User::factory()->create();
+test('users can authenticate using session based login', function (): void {
+    $user = User::factory()->create();
 
-        $this->withHeader('Origin', 'localhost')
-            ->postJson(route('login'), [
-                'email' => $user->email,
-                'password' => 'password',
-            ])
-            ->assertOk()
-            ->assertJsonStructure(['message']);
-    }
-
-    public function test_users_can_authenticate_using_token_based_login(): void
-    {
-        $user = User::factory()->create();
-
-        $this->postJson(route('login'), [
+    $this->withHeader('Origin', 'localhost')
+        ->postJson(route('login'), [
             'email' => $user->email,
-            'password' => 'password'
+            'password' => 'password',
         ])
-            ->assertOk()
-            ->assertJsonStructure(['data']);
-    }
+        ->assertOk()
+        ->assertJsonStructure(['message']);
+});
+test('users can authenticate using token based login', function (): void {
+    $user = User::factory()->create();
 
-    public function test_users_can_not_authenticate_with_invalid_password(): void
-    {
-        $user = User::factory()->create();
+    $this->postJson(route('login'), [
+        'email' => $user->email,
+        'password' => 'password'
+    ])
+        ->assertOk()
+        ->assertJsonStructure(['data']);
+});
+test('users can not authenticate with invalid password', function (): void {
+    $user = User::factory()->create();
 
-        $this->postJson(route('login'), [
-            'email' => $user->email,
-            'password' => 'wrong-password',
-        ])
-            ->assertUnprocessable();
-    }
+    $this->postJson(route('login'), [
+        'email' => $user->email,
+        'password' => 'wrong-password',
+    ])
+        ->assertUnprocessable();
+});
+test('users can logout', function (): void {
+    $user = User::factory()->create([
+        'ulid' => Str::ulid()->toBase32(),
+    ]);
 
-    public function test_users_can_logout(): void
-    {
-        $user = User::factory()->create([
-            'ulid' => Str::ulid()->toBase32(),
-        ]);
+    $token = $user->createToken('test-token')->plainTextToken;
 
-        $token = $user->createToken('test-token')->plainTextToken;
-
-        $this->postJson(route('logout'), [], [
-            'Authorization' => 'Bearer ' . $token,
-        ])
-            ->assertNoContent();
-    }
-}
+    $this->postJson(route('logout'), [], [
+        'Authorization' => 'Bearer ' . $token,
+    ])
+        ->assertNoContent();
+});

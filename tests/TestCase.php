@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use App\Enums\Role as RoleEnum;
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -18,16 +19,19 @@ abstract class TestCase extends BaseTestCase
     protected ?string $token = null;
 
     /**
-     * @param  User  $user
+     * @param  User&UserContract  $user
      */
     #[\Override]
-    public function actingAs(UserContract $user, $guard = null)
+    public function actingAs(UserContract $user, $guard = null): static
     {
         if ($this->token === null) {
             $this->token = $user->createToken('test-token')->plainTextToken;
         }
 
-        $user->withAccessToken(PersonalAccessToken::findToken($this->token));
+        /** @var PersonalAccessToken $pat */
+        $pat = PersonalAccessToken::findToken($this->token);
+
+        $user->withAccessToken($pat);
         $this->withHeader('Authorization', 'Bearer ' . $this->token);
 
         return $this;
@@ -38,7 +42,8 @@ abstract class TestCase extends BaseTestCase
      */
     public function setupRoles(string $forGuard = 'web'): void
     {
-        Role::query()->firstOrCreate(['name' => \App\Enums\Role::Admin, 'guard_name' => $forGuard]);
-        Role::query()->firstOrCreate(['name' => \App\Enums\Role::User, 'guard_name' => $forGuard]);
+        Role::insert(
+            array_map(static fn (RoleEnum $role): array => ['name' => $role->value, 'guard_name' => $forGuard], RoleEnum::cases())
+        );
     }
 }

@@ -2,103 +2,80 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Http\Controllers\Auth;
-
 use App\Enums\Role;
-use App\Http\Controllers\Authentication\ImpersonateController;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
-use PHPUnit\Framework\Attributes\CoversClass;
-use Tests\TestCase;
 
-#[CoversClass(ImpersonateController::class)]
-class ImpersonateTest extends TestCase
-{
-    public function test_it_requires_authentication(): void
-    {
-        $this->postJson(route('impersonate', 1))->assertUnauthorized();
-    }
+test('it requires authentication', function (): void {
+    $this->postJson(route('impersonate', 1))->assertUnauthorized();
+});
 
-    public function test_user_must_be_admin_to_impersonate(): void
-    {
-        $this->setUpRoles();
-        $impersonated = User::factory()->create(['first_name' => 'impersonated', 'last_name' => '']);
-        /** @var User $impersonator */
-        $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
+test('user must be admin to impersonate', function (): void {
+    $this->setUpRoles();
+    $impersonated = User::factory()->create(['first_name' => 'impersonated', 'last_name' => '']);
 
-        $this->actingAs($impersonator);
+    /** @var User $impersonator */
+    $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
 
-        $this->postJson(route('impersonate', $impersonated))
-            ->assertForbidden();
-    }
+    $this->actingAs($impersonator);
 
-    public function test_it_can_successfully_impersonate_by_admin(): void
-    {
-        $this->withoutExceptionHandling();
-        $this->setUpRoles();
-        /** @var User $impersonated */
-        $impersonated = User::factory()->create(['first_name' => 'impersonated', 'last_name' => '']);
-        /** @var User $impersonator */
-        $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
+    $this->postJson(route('impersonate', $impersonated))
+        ->assertForbidden();
+});
 
-        $impersonator->assignRole(Role::Admin);
+test('it can successfully impersonate by admin', function (): void {
+    $this->setUpRoles();
 
-        $this->actingAs($impersonator);
+    /** @var User $impersonated */
+    $impersonated = User::factory()->create(['first_name' => 'impersonated', 'last_name' => '']);
 
-        $newToken = $this->postJson(route('impersonate', $impersonated))
-            ->assertOk()
-            ->json('data');
+    /** @var User $impersonator */
+    $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
 
-        /** @var PersonalAccessToken $accessToken */
-        $accessToken = $impersonated->tokens()->whereNotNull('impersonator_id')->first();
+    $impersonator->assignRole(Role::Admin);
 
-        $this->assertTrue(PersonalAccessToken::findToken($newToken)->is($accessToken));
+    $this->actingAs($impersonator);
 
-        $this->getJson(route('user.index', $impersonated))
-            ->assertOk()
-            ->assertJsonPath('data.first_name', 'impersonated');
-    }
+    $newToken = $this->postJson(route('impersonate', $impersonated))
+        ->assertOk()
+        ->json('data');
 
-    public function test_it_can_stop_impersonating(): void
-    {
-        $this->withoutExceptionHandling();
-        $this->setUpRoles();
-        /** @var User $impersonated */
-        $impersonated = User::factory()->create(['first_name' => 'impersonated', 'last_name' => '']);
-        /** @var User $impersonator */
-        $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
+    /** @var PersonalAccessToken $accessToken */
+    $accessToken = $impersonated->tokens()->whereNotNull('impersonator_id')->first();
 
-        $this->actingAs($impersonator);
+    expect(PersonalAccessToken::findToken($newToken)->is($accessToken))->toBeTrue();
 
-        $impersonator->assignRole(Role::Admin);
+    $this->getJson(route('user.index', $impersonated))
+        ->assertOk()
+        ->assertJsonPath('data.first_name', 'impersonated');
+});
 
-        $impersonatedToken = $this
-            ->postJson(route('impersonate', $impersonated))
-            ->json('data');
+test('it can stop impersonating', function (): void {
+    $this->setUpRoles();
 
-        $this->app['auth']->forgetUser();
-        $oldToken = $this->withHeader('Authorization', "Bearer $impersonatedToken")
-            ->deleteJson(route('impersonate.stop'))
-            ->assertOk()
-            ->json('data');
+    /** @var User $impersonated */
+    $impersonated = User::factory()->create(['first_name' => 'impersonated', 'last_name' => '']);
 
-        $this->token = $oldToken;
+    /** @var User $impersonator */
+    $impersonator = User::factory()->create(['first_name' => 'impersonator', 'last_name' => '']);
 
-        $this->getJson(route('user.index'))
-            ->assertOk()
-            ->assertJsonPath('data.first_name', $impersonator->first_name);
-    }
+    $this->actingAs($impersonator);
 
-    /**
-     * Create roles for the application.
-     */
-    #[\Override]
-    public function setUpRoles(string $forGuard = 'web'): void
-    {
-        $guard = config('auth.defaults.guard');
+    $impersonator->assignRole(Role::Admin);
 
-        \Spatie\Permission\Models\Role::insert(
-            array_map(static fn (Role $role): array => ['name' => $role, 'guard_name' => $guard], Role::cases())
-        );
-    }
-}
+    $impersonatedToken = $this
+        ->postJson(route('impersonate', $impersonated))
+        ->json('data');
+
+    $this->app['auth']->forgetUser();
+    $oldToken = $this->withHeader('Authorization', "Bearer $impersonatedToken")
+        ->deleteJson(route('impersonate.stop'))
+        ->assertOk()
+        ->json('data');
+
+    $this->token = $oldToken;
+
+    $this->getJson(route('user.index'))
+        ->assertOk()
+        ->assertJsonPath('data.first_name', $impersonator->first_name);
+});

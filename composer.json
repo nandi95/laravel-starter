@@ -30,10 +30,11 @@
         "laravel/tinker": "^2.10",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.0",
+        "pestphp/pest": "^4.1",
+        "pestphp/pest-plugin-drift": "^4.0",
         "phpmd/phpmd": "^2.15",
         "phpro/grumphp": "^2.8",
         "phpstan/phpstan-strict-rules": "^2.0.4",
-        "phpunit/phpunit": "^12.3.13",
         "rector/rector": "^2.0.10",
         "roave/security-advisories": "dev-latest"
     },
@@ -68,7 +69,7 @@
             "@php artisan ide-helper:meta"
         ],
         "test": [
-            "vendor/bin/phpunit --log-junit storage/testing/tests.xml --testdox --display-notices"
+            "vendor/bin/pest --log-junit storage/testing/tests.xml --testdox --display-notices"
         ],
         "parallel-test": [
             "@php artisan test --parallel --recreate-databases"
