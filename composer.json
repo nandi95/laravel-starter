@@ -94,7 +94,7 @@
             "./vendor/bin/pest --type-coverage --compact"
         ],
         "profanity-check": [
-            "/vendor/bin/pest --profanity"
+            "./vendor/bin/pest --profanity"
         ]
     },
     "extra": {
