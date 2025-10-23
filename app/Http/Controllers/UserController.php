@@ -89,8 +89,9 @@ class UserController extends Controller
         ]);
 
         $request->validateResolved();
+        $oldPath = $request->user()->avatar;
 
-        if ($oldPath = $request->user()->avatar) {
+        if ($oldPath) {
             DeleteFile::dispatch($oldPath);
             Log::debug('Scheduled old avatar deletion', [
                 'user_id' => $request->user()->getKey(),

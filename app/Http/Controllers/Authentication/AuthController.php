@@ -153,18 +153,20 @@ class AuthController extends Controller
             $user->currentAccessToken()->delete();
             event(new CurrentDeviceLogout('auth:sanctum', $user));
             Log::info('API token revoked');
-        } else {
-            // Session-based logout
-            auth()->logoutCurrentDevice();
 
-            // Only invalidate session if session is available
-            if ($request->hasSession()) {
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
-            }
-
-            Log::info('Session invalidated');
+            return response()->json(status: Response::HTTP_NO_CONTENT);
         }
+
+        // Session-based logout
+        auth()->logoutCurrentDevice();
+
+        // Only invalidate session if session is available
+        if ($request->hasSession()) {
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
+        Log::info('Session invalidated');
 
         return response()->json(status: Response::HTTP_NO_CONTENT);
     }
