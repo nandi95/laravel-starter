@@ -6,12 +6,24 @@ grumphp:
     files:
       - .env
   tasks:
+    # Rector check (dry-run mode)
     rector:
       no_diffs: true
-    phpstan:
-      configuration: phpstan.neon
-      memory_limit: "-1"
-#    phpcsfixer:
-#      cache_file: .php-cs-fixer.cache
-#      config: .php-cs-fixer.php
+      clear_cache: false
+
+#    # PHPMD (PHP Mess Detector)
+#    phpmd: ~
+#
+#    # PHPStan
+#    phpstan:
+#      configuration: phpstan.neon
+#      memory_limit: "-1"
+
+    # Composer validation checks
     composer: ~
+    securitychecker_composeraudit: ~
+    composer_validate_autoload: ~
+
+    # Custom pre-commit script to run all checks
+    composer_script:
+        script: pre-commit-all

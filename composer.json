@@ -91,10 +91,15 @@
             "./vendor/bin/rector"
         ],
         "type-coverage": [
-            "./vendor/bin/pest --type-coverage --compact"
+            "@php -d memory_limit=2G ./vendor/bin/pest --type-coverage --compact"
         ],
         "profanity-check": [
             "./vendor/bin/pest --profanity"
+        ],
+        "pre-commit-all": [
+            "@profanity-check",
+            "@type-coverage",
+            "@lint"
         ]
     },
     "extra": {

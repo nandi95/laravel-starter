@@ -1,6 +1,5 @@
 <?php
 
-
 namespace Illuminate\Foundation\Http {
 
     use App\Models\User;

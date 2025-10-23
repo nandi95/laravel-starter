@@ -47,6 +47,9 @@ jobs:
       - name: Check for profanity
         run: composer profanity-check -- --ci
 
+      - name: Rector check
+        run: composer rector -- --dry-run --no-progress-bar --no-diffs --only=
+
       - name: Run linter
         run: composer lint -- --bail
 
