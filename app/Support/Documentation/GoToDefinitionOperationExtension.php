@@ -18,7 +18,7 @@ class GoToDefinitionOperationExtension extends OperationExtension
         if (Str::contains($fileName, 'vendor/')) {
             return '';
         }
-        $url = static::REPO_URL.Str::replace(base_path(), '', $routeInfo->reflectionMethod()->getFileName());
+        $url = static::REPO_URL . Str::replace(base_path(), '', $routeInfo->reflectionMethod()->getFileName());
 
         $line = $routeInfo->reflectionMethod()->getStartLine();
 
