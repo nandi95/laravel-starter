@@ -29,6 +29,9 @@ jobs:
       - name: Configure composer
         run: composer config github-oauth.github.com ${{ secrets.COMPOSER_AUTH }}
 
+      - name: Copy .env file
+        run: cp .env.example .env
+
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --no-scripts --optimize-autoloader
 
@@ -48,7 +51,7 @@ jobs:
         run: composer profanity-check -- --ci
 
       - name: Rector check
-        run: composer rector -- --dry-run --no-progress-bar --no-diffs --only=
+        run: composer rector -- --dry-run --no-progress-bar --no-diffs
 
       - name: Run linter
         run: composer lint -- --bail
