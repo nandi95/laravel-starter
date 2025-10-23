@@ -37,7 +37,7 @@ class RecordRequestIdentifiers
 
             $event->token->forceFill($attributes);
 
-            app()->terminating(fn () => $event->token->save());
+            app()->terminating($event->token->save(...));
         }
     }
 }

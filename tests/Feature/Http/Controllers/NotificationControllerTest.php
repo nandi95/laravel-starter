@@ -2,170 +2,143 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Http\Controllers;
-
-use App\Http\Controllers\NotificationController;
 use App\Models\User;
 use Illuminate\Support\Str;
-use PHPUnit\Framework\Attributes\CoversClass;
-use Tests\TestCase;
 
-#[CoversClass(NotificationController::class)]
-class NotificationControllerTest extends TestCase
-{
-    private User $user;
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseMissing;
 
-    private User $otherUser;
+beforeEach(function (): void {
+    $this->user = User::factory()->create();
+    $this->otherUser = User::factory()->create();
+});
+test('can list notifications', function (): void {
+    // Create some notifications for the user
+    $this->user->notifications()->create([
+        'id' => Str::uuid()->toString(),
+        'type' => 'App\Notifications\TestNotification',
+        'data' => ['message' => 'Test notification 1'],
+    ]);
 
-    #[\Override]
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->user = User::factory()->create();
-        $this->otherUser = User::factory()->create();
-    }
+    $this->user->notifications()->create([
+        'id' => Str::uuid()->toString(),
+        'type' => 'App\Notifications\TestNotification',
+        'data' => ['message' => 'Test notification 2'],
+    ]);
 
-    public function test_can_list_notifications(): void
-    {
-        // Create some notifications for the user
+    actingAs($this->user)
+        ->getJson(route('notifications.index'))
+        ->assertOk()
+        ->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'data',
+                    'readAt',
+                    'createdAt',
+                ]
+            ],
+            'meta',
+            'links'
+        ]);
+});
+test('can list notifications with custom per page', function (): void {
+    // Create 15 notifications
+    for ($i = 0; $i < 15; $i++) {
         $this->user->notifications()->create([
             'id' => Str::uuid()->toString(),
             'type' => 'App\Notifications\TestNotification',
-            'data' => ['message' => 'Test notification 1'],
-        ]);
-
-        $this->user->notifications()->create([
-            'id' => Str::uuid()->toString(),
-            'type' => 'App\Notifications\TestNotification',
-            'data' => ['message' => 'Test notification 2'],
-        ]);
-
-        $this->actingAs($this->user)
-            ->getJson(route('notifications.index'))
-            ->assertOk()
-            ->assertJsonStructure([
-                'data' => [
-                    '*' => [
-                        'id',
-                        'data',
-                        'readAt',
-                        'createdAt',
-                    ]
-                ],
-                'meta',
-                'links'
-            ]);
-    }
-
-    public function test_can_list_notifications_with_custom_per_page(): void
-    {
-        // Create 15 notifications
-        for ($i = 0; $i < 15; $i++) {
-            $this->user->notifications()->create([
-                'id' => Str::uuid()->toString(),
-                'type' => 'App\Notifications\TestNotification',
-                'data' => ['message' => "Test notification {$i}"],
-            ]);
-        }
-
-        $this->actingAs($this->user)
-            ->getJson(route('notifications.index', ['per_page' => 5]))
-            ->assertOk()
-            ->assertJsonCount(5, 'data');
-    }
-
-    public function test_can_mark_all_notifications_as_read(): void
-    {
-        // Create some unread notifications
-        $this->user->notifications()->create([
-            'id' => Str::uuid()->toString(),
-            'type' => 'App\Notifications\TestNotification',
-            'data' => ['message' => 'Test notification 1'],
-        ]);
-
-        $this->user->notifications()->create([
-            'id' => Str::uuid()->toString(),
-            'type' => 'App\Notifications\TestNotification',
-            'data' => ['message' => 'Test notification 2'],
-        ]);
-
-        $this->actingAs($this->user)
-            ->postJson(route('notifications.mark-all-read'))
-            ->assertNoContent();
-
-        $this->assertDatabaseMissing('notifications', [
-            'notifiable_id' => $this->user->getKey(),
-            'read_at' => null,
+            'data' => ['message' => "Test notification {$i}"],
         ]);
     }
 
-    public function test_can_mark_single_notification_as_read(): void
-    {
-        $notification = $this->user->notifications()->create([
-            'id' => Str::uuid()->toString(),
-            'type' => 'App\Notifications\TestNotification',
-            'data' => ['message' => 'Test notification'],
+    actingAs($this->user)
+        ->getJson(route('notifications.index', ['per_page' => 5]))
+        ->assertOk()
+        ->assertJsonCount(5, 'data');
+});
+test('can mark all notifications as read', function (): void {
+    // Create some unread notifications
+    $this->user->notifications()->create([
+        'id' => Str::uuid()->toString(),
+        'type' => 'App\Notifications\TestNotification',
+        'data' => ['message' => 'Test notification 1'],
+    ]);
+
+    $this->user->notifications()->create([
+        'id' => Str::uuid()->toString(),
+        'type' => 'App\Notifications\TestNotification',
+        'data' => ['message' => 'Test notification 2'],
+    ]);
+
+    actingAs($this->user)
+        ->postJson(route('notifications.mark-all-read'))
+        ->assertNoContent();
+
+    assertDatabaseMissing('notifications', [
+        'notifiable_id' => $this->user->getKey(),
+        'read_at' => null,
+    ]);
+});
+test('can mark single notification as read', function (): void {
+    $notification = $this->user->notifications()->create([
+        'id' => Str::uuid()->toString(),
+        'type' => 'App\Notifications\TestNotification',
+        'data' => ['message' => 'Test notification'],
+    ]);
+
+    actingAs($this->user)
+        ->patchJson(route('notifications.mark-read', $notification))
+        ->assertOk()
+        ->assertJsonStructure([
+            'id',
+            'data',
+            'readAt',
+            'createdAt',
         ]);
 
-        $this->actingAs($this->user)
-            ->patchJson(route('notifications.mark-read', $notification))
-            ->assertOk()
-            ->assertJsonStructure([
-                'id',
-                'data',
-                'readAt',
-                'createdAt',
-            ]);
+    expect($notification->fresh()->read_at)->not->toBeNull();
+});
+test('cannot mark other users notification as read', function (): void {
+    $notification = $this->otherUser->notifications()->create([
+        'id' => Str::uuid()->toString(),
+        'type' => 'App\Notifications\TestNotification',
+        'data' => ['message' => 'Test notification'],
+    ]);
 
-        $this->assertNotNull($notification->fresh()->read_at);
-    }
+    actingAs($this->user)
+        ->patchJson(route('notifications.mark-read', $notification))
+        ->assertForbidden();
+});
+test('can mark single notification as unread', function (): void {
+    $notification = $this->user->notifications()->create([
+        'id' => Str::uuid()->toString(),
+        'type' => 'App\Notifications\TestNotification',
+        'data' => ['message' => 'Test notification'],
+        'read_at' => now(),
+    ]);
 
-    public function test_cannot_mark_other_users_notification_as_read(): void
-    {
-        $notification = $this->otherUser->notifications()->create([
-            'id' => Str::uuid()->toString(),
-            'type' => 'App\Notifications\TestNotification',
-            'data' => ['message' => 'Test notification'],
+    actingAs($this->user)
+        ->patchJson(route('notifications.mark-unread', $notification))
+        ->assertOk()
+        ->assertJsonStructure([
+            'id',
+            'data',
+            'readAt',
+            'createdAt',
         ]);
 
-        $this->actingAs($this->user)
-            ->patchJson(route('notifications.mark-read', $notification))
-            ->assertForbidden();
-    }
+    expect($notification->fresh()->read_at)->toBeNull();
+});
+test('cannot mark other users notification as unread', function (): void {
+    $notification = $this->otherUser->notifications()->create([
+        'id' => Str::uuid()->toString(),
+        'type' => 'App\Notifications\TestNotification',
+        'data' => ['message' => 'Test notification'],
+        'read_at' => now(),
+    ]);
 
-    public function test_can_mark_single_notification_as_unread(): void
-    {
-        $notification = $this->user->notifications()->create([
-            'id' => Str::uuid()->toString(),
-            'type' => 'App\Notifications\TestNotification',
-            'data' => ['message' => 'Test notification'],
-            'read_at' => now(),
-        ]);
-
-        $this->actingAs($this->user)
-            ->patchJson(route('notifications.mark-unread', $notification))
-            ->assertOk()
-            ->assertJsonStructure([
-                'id',
-                'data',
-                'readAt',
-                'createdAt',
-            ]);
-
-        $this->assertNull($notification->fresh()->read_at);
-    }
-
-    public function test_cannot_mark_other_users_notification_as_unread(): void
-    {
-        $notification = $this->otherUser->notifications()->create([
-            'id' => Str::uuid()->toString(),
-            'type' => 'App\Notifications\TestNotification',
-            'data' => ['message' => 'Test notification'],
-            'read_at' => now(),
-        ]);
-
-        $this->actingAs($this->user)
-            ->patchJson(route('notifications.mark-unread', $notification))
-            ->assertForbidden();
-    }
-}
+    actingAs($this->user)
+        ->patchJson(route('notifications.mark-unread', $notification))
+        ->assertForbidden();
+});

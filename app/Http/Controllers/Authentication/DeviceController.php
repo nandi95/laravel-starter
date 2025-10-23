@@ -58,16 +58,16 @@ class DeviceController extends Controller
      */
     public function deviceDisconnect(Request $request): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+
         Log::info('Device disconnect request received', [
-            'user_id' => $request->user()->getKey()
+            'user_id' => $user->getKey()
         ]);
 
         $request->validate([
             'hash' => 'required',
         ]);
-
-        /** @var User $user */
-        $user = $request->user();
 
         $id = (int) Crypt::decryptString($request->get('hash'));
 

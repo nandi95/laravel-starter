@@ -6,6 +6,7 @@ namespace App\Http\Requests;
 
 use App\Enums\AssetType;
 use App\Jobs\DeleteFile;
+use Closure;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -47,7 +48,7 @@ class FileStoreRequest extends FormRequest
             'required',
             'string',
             'starts_with:tmp/',
-            function (string $attribute, string $value, $fail): void {
+            function (string $attribute, string $value, Closure $fail): void {
                 if (!Storage::exists($value)) {
                     $fail('The file doesn\'t exists at this path.');
                 }

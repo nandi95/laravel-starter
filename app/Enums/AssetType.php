@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Enums;
 
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 enum AssetType: string
 {
@@ -18,12 +19,12 @@ enum AssetType: string
 
     public static function fromMime(string $mime): self
     {
-        [$type, $subType] = explode('/', $mime);
+        [$type] = explode('/', $mime);
 
         return match ($type) {
             'image' => self::Image,
             'video' => self::Video,
-            default => throw new \InvalidArgumentException('Unsupported mime type')
+            default => throw new InvalidArgumentException('Unsupported mime type')
         };
     }
 }

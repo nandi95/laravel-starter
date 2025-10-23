@@ -10,6 +10,7 @@
     "require": {
         "php": "^8.3",
         "ext-redis": "*",
+        "ext-intl": "*",
         "laravel/framework": "^v12.4.1",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.16",
@@ -30,10 +31,14 @@
         "laravel/tinker": "^2.10",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.0",
+        "pestphp/pest": "^4.1",
+        "pestphp/pest-plugin-drift": "^4.0",
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "pestphp/pest-plugin-profanity": "^4.1",
+        "pestphp/pest-plugin-type-coverage": "^4.0",
         "phpmd/phpmd": "^2.15",
         "phpro/grumphp": "^2.8",
         "phpstan/phpstan-strict-rules": "^2.0.4",
-        "phpunit/phpunit": "^12.3.13",
         "rector/rector": "^2.0.10",
         "roave/security-advisories": "dev-latest"
     },
@@ -68,7 +73,7 @@
             "@php artisan ide-helper:meta"
         ],
         "test": [
-            "vendor/bin/phpunit --log-junit storage/testing/tests.xml --testdox --display-notices"
+            "vendor/bin/pest --log-junit storage/testing/tests.xml --testdox --display-notices"
         ],
         "parallel-test": [
             "@php artisan test --parallel --recreate-databases"
@@ -84,6 +89,17 @@
         ],
         "rector": [
             "./vendor/bin/rector"
+        ],
+        "type-coverage": [
+            "@php -d memory_limit=2G ./vendor/bin/pest --type-coverage --compact"
+        ],
+        "profanity-check": [
+            "./vendor/bin/pest --profanity"
+        ],
+        "pre-commit-all": [
+            "@profanity-check",
+            "@type-coverage",
+            "@lint"
         ]
     },
     "extra": {

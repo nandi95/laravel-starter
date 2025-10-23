@@ -2,176 +2,149 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Http\Controllers;
-
 use App\Enums\AssetType;
-use App\Http\Controllers\UserController;
 use App\Jobs\MoveFile;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
-use PHPUnit\Framework\Attributes\CoversClass;
-use Tests\TestCase;
 
-#[CoversClass(UserController::class)]
-class UserControllerTest extends TestCase
-{
-    private User $user;
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\getJson;
+use function Pest\Laravel\patchJson;
+use function Pest\Laravel\postJson;
 
-    private User $otherUser;
-
-    #[\Override]
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->user = User::factory()->create();
-        $this->otherUser = User::factory()->create();
-        Bus::fake();
-    }
-
-    public function test_can_get_authenticated_user_details(): void
-    {
-        $this->actingAs($this->user)
-            ->getJson(route('user.index'))
-            ->assertOk()
-            ->assertJsonStructure([
-                'data' => [
-                    'id',
-                    'first_name',
-                    'last_name',
-                    'email',
-                    'avatar',
-                    'unreadNotificationsCount',
-                    'roles',
-                    'userProviders'
-                ]
-            ]);
-    }
-
-    public function test_can_update_user_profile(): void
-    {
-        $this->actingAs($this->user)
-            ->patchJson(route('user.update'), [
-                'first_name' => 'New',
-                'last_name' => 'Name',
-                'email' => 'newemail@example.com'
-            ])
-            ->assertOk();
-
-        $this->assertDatabaseHas('users', [
-            'id' => $this->user->getKey(),
+beforeEach(function (): void {
+    $this->user = User::factory()->create();
+    $this->otherUser = User::factory()->create();
+    Bus::fake();
+});
+test('can get authenticated user details', function (): void {
+    actingAs($this->user)
+        ->getJson(route('user.index'))
+        ->assertOk()
+        ->assertJsonStructure([
+            'data' => [
+                'id',
+                'first_name',
+                'last_name',
+                'email',
+                'avatar',
+                'unreadNotificationsCount',
+                'roles',
+                'userProviders'
+            ]
+        ]);
+});
+test('can update user profile', function (): void {
+    actingAs($this->user)
+        ->patchJson(route('user.update'), [
             'first_name' => 'New',
             'last_name' => 'Name',
             'email' => 'newemail@example.com'
-        ]);
-    }
+        ])
+        ->assertOk();
 
-    public function test_validates_profile_update_request(): void
-    {
-        $this->actingAs($this->user)
-            ->patchJson(route('user.update'), [
-                'last_name' => 'Test',
-                'email' => 'invalid-email'
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['first_name', 'email']);
-    }
+    assertDatabaseHas('users', [
+        'id' => $this->user->getKey(),
+        'first_name' => 'New',
+        'last_name' => 'Name',
+        'email' => 'newemail@example.com'
+    ]);
+});
+test('validates profile update request', function (): void {
+    actingAs($this->user)
+        ->patchJson(route('user.update'), [
+            'last_name' => 'Test',
+            'email' => 'invalid-email'
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['first_name', 'email']);
+});
+test('cannot use existing email for profile update', function (): void {
+    actingAs($this->user)
+        ->patchJson(route('user.update'), [
+            'first_name' => 'New',
+            'last_name' => 'Name',
+            'email' => $this->otherUser->email
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['email']);
+});
+test('email verification is reset when email changes', function (): void {
+    $this->user->markEmailAsVerified();
 
-    public function test_cannot_use_existing_email_for_profile_update(): void
-    {
-        $this->actingAs($this->user)
-            ->patchJson(route('user.update'), [
-                'first_name' => 'New',
-                'last_name' => 'Name',
-                'email' => $this->otherUser->email
-            ])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['email']);
-    }
+    actingAs($this->user)
+        ->patchJson(route('user.update'), [
+            'first_name' => 'New',
+            'last_name' => 'Name',
+            'email' => 'newemail@example.com'
+        ])
+        ->assertOk();
 
-    public function test_email_verification_is_reset_when_email_changes(): void
-    {
-        $this->user->markEmailAsVerified();
+    $this->assertNotInstanceOf(Carbon::class, $this->user->fresh()->email_verified_at);
+});
+test('can update user avatar', function (): void {
+    $file = UploadedFile::fake()->create('avatar.jpg', 100, 'image/jpeg');
 
-        $this->actingAs($this->user)
-            ->patchJson(route('user.update'), [
-                'first_name' => 'New',
-                'last_name' => 'Name',
-                'email' => 'newemail@example.com'
-            ])
-            ->assertOk();
+    Storage::shouldReceive('exists')
+        ->andReturn(true);
+    Storage::shouldReceive('url')
+        ->andReturn('http://example.com/tmp/' . $file->name);
 
-        $this->assertNotInstanceOf(\Illuminate\Support\Carbon::class, $this->user->fresh()->email_verified_at);
-    }
-
-    public function test_can_update_user_avatar(): void
-    {
-        $file = UploadedFile::fake()->create('avatar.jpg', 100, 'image/jpeg');
-
-        Storage::shouldReceive('exists')
-            ->andReturn(true);
-        Storage::shouldReceive('url')
-            ->andReturn('http://example.com/tmp/' . $file->name);
-
-        $this->actingAs($this->user)
-            ->postJson(route('user.avatar'), [
-                'key' => 'tmp/' . $file->name,
-                'title' => 'Avatar',
-                'size' => $file->getSize(),
-                'width' => 800,
-                'height' => 600,
-            ])
-            ->assertOk()
-            ->assertJsonStructure([
-                'data'
-            ]);
-
-        $this->assertDatabaseHas('users', [
-            'id' => $this->user->getKey(),
-            'avatar' => 'user/' . $this->user->ulid . '/' . AssetType::Image->value . 's/' . $file->name
+    actingAs($this->user)
+        ->postJson(route('user.avatar'), [
+            'key' => 'tmp/' . $file->name,
+            'title' => 'Avatar',
+            'size' => $file->getSize(),
+            'width' => 800,
+            'height' => 600,
+        ])
+        ->assertOk()
+        ->assertJsonStructure([
+            'data'
         ]);
 
-        Bus::assertDispatched(MoveFile::class);
-    }
+    assertDatabaseHas('users', [
+        'id' => $this->user->getKey(),
+        'avatar' => 'user/' . $this->user->ulid . '/' . AssetType::Image->value . 's/' . $file->name
+    ]);
 
-    public function test_deletes_old_avatar_when_updating(): void
-    {
-        $oldPath = 'avatars/old-avatar.jpg';
-        $this->user->update(['avatar' => $oldPath]);
+    Bus::assertDispatched(MoveFile::class);
+});
+test('deletes old avatar when updating', function (): void {
+    $oldPath = 'avatars/old-avatar.jpg';
+    $this->user->update(['avatar' => $oldPath]);
 
-        $file = UploadedFile::fake()->create('avatar.jpg', 100, 'image/jpeg');
+    $file = UploadedFile::fake()->create('avatar.jpg', 100, 'image/jpeg');
 
-        Storage::shouldReceive('exists')
-            ->andReturn(true);
-        Storage::shouldReceive('url')
-            ->andReturn('http://example.com/tmp/' . $file->name);
+    Storage::shouldReceive('exists')
+        ->andReturn(true);
+    Storage::shouldReceive('url')
+        ->andReturn('http://example.com/tmp/' . $file->name);
 
-        $this->actingAs($this->user)
-            ->postJson(route('user.avatar'), [
-                'key' => 'tmp/' . $file->name,
-                'title' => 'Avatar',
-                'size' => $file->getSize(),
-                'width' => 800,
-                'height' => 600,
-            ])
-            ->assertOk();
+    actingAs($this->user)
+        ->postJson(route('user.avatar'), [
+            'key' => 'tmp/' . $file->name,
+            'title' => 'Avatar',
+            'size' => $file->getSize(),
+            'width' => 800,
+            'height' => 600,
+        ])
+        ->assertOk();
 
-        Bus::assertDispatched(\App\Jobs\DeleteFile::class, fn ($job): bool => $job->path === $oldPath);
-    }
-
-    public function test_validates_avatar_update_request(): void
-    {
-        $this->actingAs($this->user)
-            ->postJson(route('user.avatar'), ['size' => 123, 'width' => 800, 'height' => 600])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['key']);
-    }
-
-    public function test_requires_authentication_for_all_routes(): void
-    {
-        $this->getJson(route('user.index'))->assertUnauthorized();
-        $this->patchJson(route('user.update'))->assertUnauthorized();
-        $this->postJson(route('user.avatar'))->assertUnauthorized();
-    }
-}
+    Bus::assertDispatched(\App\Jobs\DeleteFile::class, fn ($job): bool => $job->path === $oldPath);
+});
+test('validates avatar update request', function (): void {
+    actingAs($this->user)
+        ->postJson(route('user.avatar'), ['size' => 123, 'width' => 800, 'height' => 600])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['key']);
+});
+test('requires authentication for all routes', function (): void {
+    getJson(route('user.index'))->assertUnauthorized();
+    patchJson(route('user.update'))->assertUnauthorized();
+    postJson(route('user.avatar'))->assertUnauthorized();
+});

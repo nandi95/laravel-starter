@@ -29,8 +29,11 @@ jobs:
       - name: Configure composer
         run: composer config github-oauth.github.com ${{ secrets.COMPOSER_AUTH }}
 
+      - name: Copy .env file
+        run: cp .env.example .env
+
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --no-scripts
+        run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --no-scripts --optimize-autoloader
 
       - name: Cache Composer packages
         id: composer-cache
@@ -41,8 +44,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-php-
 
-      - name: Run code sniffer
-        run: composer sniff
+      - name: Check type coverage
+        run: composer type-coverage -- --ci
+
+      - name: Check for profanity
+        run: composer profanity-check -- --ci
+
+      - name: Rector check
+        run: composer rector -- --dry-run --no-progress-bar --no-diffs
+
+      - name: Run linter
+        run: composer lint -- --bail
 
       - name: Run mess detector
         run: composer php-md

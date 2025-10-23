@@ -45,12 +45,12 @@ class DeAuthRequest extends FormRequest
      */
     public function decodedSignature(): array
     {
-        $encoded_sig = $this->string('signed_request')->explode('.', 2)->first();
+        $encodedSignature = $this->string('signed_request')->explode('.', 2)->first();
         $payload = $this->string('signed_request')->explode('.', 2)->last();
 
         return [
-            'signature' => base64_decode(strtr($encoded_sig, '-_', '+/')),
-            'user' => json_decode(base64_decode(strtr($payload, '-_', '+/')), true, 512, JSON_THROW_ON_ERROR)
+            'signature' => base64_decode(strtr($encodedSignature, '-_', '+/'), true),
+            'user' => json_decode(base64_decode(strtr($payload, '-_', '+/'), true), true, 512, JSON_THROW_ON_ERROR)
         ];
     }
 }

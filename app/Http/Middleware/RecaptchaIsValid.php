@@ -52,15 +52,17 @@ class RecaptchaIsValid
                 ]
             );
 
+        $errorCodes = $response->json('error-codes', []);
+
         if (
             !$response->successful()
             || !$response->json('success')
             || $response->json('score', 0) < 0.8
-            || count($errorCodes = $response->json('error-codes', []))
+            || count($errorCodes) > 0
         ) {
             $error = 'Google recaptcha validation failed';
 
-            if (isset($errorCodes) && count($errorCodes)) {
+            if (count($errorCodes) > 0) {
                 $error .= ' with error codes: ' . implode(', ', $errorCodes);
             }
 

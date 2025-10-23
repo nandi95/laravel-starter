@@ -50,12 +50,14 @@ class EmailVerificationController extends Controller
                 'email' => $user->email
             ]);
             event(new Verified($user));
-        } else {
-            Log::debug('Email already verified', [
-                'user_id' => $user->getKey(),
-                'email' => $user->email
-            ]);
+
+            return response()->json(['message' => 'Email verified!']);
         }
+
+        Log::debug('Email already verified', [
+            'user_id' => $user->getKey(),
+            'email' => $user->email
+        ]);
 
         return response()->json(['message' => 'Email verified!']);
     }

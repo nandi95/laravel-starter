@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
- * @property PersonalAccessToken resource
+ * @property PersonalAccessToken $resource
  */
 class PersonalAccessTokenResource extends JsonResource
 {

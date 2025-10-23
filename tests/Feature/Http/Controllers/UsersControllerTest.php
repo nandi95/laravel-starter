@@ -2,115 +2,92 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Http\Controllers;
-
 use App\Enums\Role;
-use App\Http\Controllers\UsersController;
 use App\Models\User;
-use PHPUnit\Framework\Attributes\CoversClass;
-use Tests\TestCase;
 
-#[CoversClass(UsersController::class)]
-class UsersControllerTest extends TestCase
-{
-    private User $admin;
+use function Pest\Laravel\actingAs;
+use function Pest\Laravel\getJson;
 
-    private User $regularUser;
+beforeEach(function (): void {
+    $this->admin = User::factory()->create();
+    $this->setupRoles();
+    $this->admin->assignRole(Role::Admin);
+    $this->regularUser = User::factory()->create(['first_name' => 'Regular', 'last_name' => 'User']);
+});
+test('admin can list users', function (): void {
+    // Create some regular users
+    User::factory()->count(3)->create();
 
-    #[\Override]
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->admin = User::factory()->create();
-        $this->setupRoles();
-        $this->admin->assignRole(Role::Admin);
-        $this->regularUser = User::factory()->create(['first_name' => 'Regular', 'last_name' => 'User']);
-    }
+    actingAs($this->admin)
+        ->getJson(route('users'))
+        ->assertOk()
+        ->assertJsonCount(3 + 1, 'data')
+        ->assertJsonStructure([
+            'data' => [
+                '*' => [
+                    'id',
+                    'first_name',
+                    'last_name',
+                    'email',
+                    'avatar'
+                ]
+            ],
+            'meta',
+            'links'
+        ]);
+});
+test('admin cannot see other admins in list', function (): void {
+    // Create another admin
+    $otherAdmin = User::factory()->create();
+    $otherAdmin->assignRole(Role::Admin);
 
-    public function test_admin_can_list_users(): void
-    {
-        // Create some regular users
-        User::factory()->count(3)->create();
+    // Create some regular users
+    User::factory()->count(3)->create();
 
-        $this->actingAs($this->admin)
-            ->getJson(route('users'))
-            ->assertOk()
-            ->assertJsonCount(3 + 1, 'data')
-            ->assertJsonStructure([
-                'data' => [
-                    '*' => [
-                        'id',
-                        'first_name',
-                        'last_name',
-                        'email',
-                        'avatar'
-                    ]
-                ],
-                'meta',
-                'links'
-            ]);
-    }
+    $response = actingAs($this->admin)
+        ->getJson(route('users'))
+        ->assertOk();
 
-    public function test_admin_cannot_see_other_admins_in_list(): void
-    {
-        // Create another admin
-        $otherAdmin = User::factory()->create();
-        $otherAdmin->assignRole(Role::Admin);
+    $userIds = collect($response->json('data'))->pluck('id')->toArray();
 
-        // Create some regular users
-        User::factory()->count(3)->create();
+    expect($userIds)->not->toContain($otherAdmin->getKey());
+    expect($userIds)->toHaveCount(3 + 1);
+});
+test('users are ordered by name', function (): void {
+    /* @var User $userA */
+    $userC = User::factory()->create(['first_name' => 'Charlie', 'last_name' => '']);
 
-        $response = $this->actingAs($this->admin)
-            ->getJson(route('users'))
-            ->assertOk();
+    /* @var User $userB */
+    $userA = User::factory()->create(['first_name' => 'Alice', 'last_name' => '']);
 
-        $userIds = collect($response->json('data'))->pluck('id')->toArray();
+    /* @var User $userB */
+    $userB = User::factory()->create(['first_name' => 'Bob', 'last_name' => '']);
 
-        $this->assertNotContains($otherAdmin->getKey(), $userIds);
-        $this->assertCount(3 + 1, $userIds);
-    }
+    $userIds = actingAs($this->admin)
+        ->getJson(route('users'))
+        ->assertOk()
+        ->json('data.*.id');
 
-    public function test_users_are_ordered_by_name(): void
-    {
-        /* @var User $userA */
-        $userC = User::factory()->create(['first_name' => 'Charlie', 'last_name' => '']);
-        /* @var User $userB */
-        $userA = User::factory()->create(['first_name' => 'Alice', 'last_name' => '']);
-        /* @var User $userB */
-        $userB = User::factory()->create(['first_name' => 'Bob', 'last_name' => '']);
+    expect($userIds)->toEqual([$userA->ulid, $userB->ulid, $userC->ulid, $this->regularUser->ulid]);
+});
+test('regular users cannot list users', function (): void {
+    actingAs($this->regularUser)
+        ->getJson(route('users'))
+        ->assertForbidden();
+});
+test('unauthenticated users cannot list users', function (): void {
+    getJson(route('users'))
+        ->assertUnauthorized();
+});
+test('pagination works correctly', function (): void {
+    // Create 15 users
+    User::factory()->count(15)->create();
 
-        $userIds = $this->actingAs($this->admin)
-            ->getJson(route('users'))
-            ->assertOk()
-            ->json('data.*.id');
+    $response = actingAs($this->admin)
+        ->getJson(route('users'))
+        ->assertOk();
 
-        $this->assertEquals([$userA->ulid, $userB->ulid, $userC->ulid, $this->regularUser->ulid], $userIds);
-    }
-
-    public function test_regular_users_cannot_list_users(): void
-    {
-        $this->actingAs($this->regularUser)
-            ->getJson(route('users'))
-            ->assertForbidden();
-    }
-
-    public function test_unauthenticated_users_cannot_list_users(): void
-    {
-        $this->getJson(route('users'))
-            ->assertUnauthorized();
-    }
-
-    public function test_pagination_works_correctly(): void
-    {
-        // Create 15 users
-        User::factory()->count(15)->create();
-
-        $response = $this->actingAs($this->admin)
-            ->getJson(route('users'))
-            ->assertOk();
-
-        $this->assertCount(10, $response->json('data'));
-        $this->assertArrayHasKey('meta', $response->json());
-        $this->assertArrayHasKey('links', $response->json());
-    }
-}
+    expect($response->json('data'))->toHaveCount(10);
+    expect($response->json())->toHaveKey('meta');
+    expect($response->json())->toHaveKey('links');
+});

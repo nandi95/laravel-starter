@@ -2,107 +2,92 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Http\Controllers\Auth;
-
 use App\Enums\OauthProvider;
-use App\Http\Controllers\Authentication\OAuthController;
 use App\Models\User;
 use App\Models\UserProvider;
 use Illuminate\Encryption\Encrypter;
-use PHPUnit\Framework\Attributes\CoversClass;
-use Tests\TestCase;
 
-#[CoversClass(OAuthController::class)]
-class OAuthControllerTest extends TestCase
-{
-    public function test_deletion_status_for_existing_user(): void
-    {
-        /** @var User $user */
-        $user = User::factory()
-            ->has(UserProvider::factory())
-            ->createOne();
+use function Pest\Laravel\getJson;
+use function Pest\Laravel\withoutExceptionHandling;
 
-        $payload = encrypt([
-            'id' => $user->ulid,
-            'provider' => $user->userProviders()->first()->name
-        ]);
+test('deletion status for existing user', function (): void {
+    /** @var User $user */
+    $user = User::factory()
+        ->has(UserProvider::factory())
+        ->createOne();
 
-        $this->getJson(route('oauth.deletion-status', ['code' => $payload]))
-            ->assertOk()
-            ->assertJson(['data' => [
-                'userExists' => true,
-                'toBeDeletedAt' => null
-            ]]);
-    }
+    $payload = encrypt([
+        'id' => $user->ulid,
+        'provider' => $user->userProviders()->first()->name
+    ]);
 
-    public function test_deletion_status_for_non_existing_user(): void
-    {
-        $payload = encrypt([
-            'id' => 'random',
-            'provider' => OauthProvider::GOOGLE
-        ]);
+    getJson(route('oauth.deletion-status', ['code' => $payload]))
+        ->assertOk()
+        ->assertJson(['data' => [
+            'userExists' => true,
+            'toBeDeletedAt' => null
+        ]]);
+});
+test('deletion status for non existing user', function (): void {
+    $payload = encrypt([
+        'id' => 'random',
+        'provider' => OauthProvider::GOOGLE
+    ]);
 
-        $this->getJson(route('oauth.deletion-status', ['code' => $payload]))
-            ->assertOk()
-            ->assertJson(['data' => [
-                'userExists' => false,
-                'toBeDeletedAt' => null
-            ]]);
-    }
+    getJson(route('oauth.deletion-status', ['code' => $payload]))
+        ->assertOk()
+        ->assertJson(['data' => [
+            'userExists' => false,
+            'toBeDeletedAt' => null
+        ]]);
+});
+test('deletion status with incorrect encryption key', function (): void {
+    $encrypter = new Encrypter(Encrypter::generateKey(config('app.cipher')), config('app.cipher'));
 
-    public function test_deletion_status_with_incorrect_encryption_key(): void
-    {
-        $encrypter = new Encrypter(Encrypter::generateKey(config('app.cipher')), config('app.cipher'));
+    $payload = $encrypter->encrypt([
+        'id' => 'random',
+        'provider' => OauthProvider::GOOGLE
+    ]);
 
-        $payload = $encrypter->encrypt([
-            'id' => 'random',
-            'provider' => OauthProvider::GOOGLE
-        ]);
+    getJson(route('oauth.deletion-status', ['code' => $payload]))
+        ->assertBadRequest();
+});
+test('deletion status for soft deleted user', function (): void {
+    withoutExceptionHandling();
+    $now = now()->toImmutable();
 
-        $this->getJson(route('oauth.deletion-status', ['code' => $payload]))
-            ->assertBadRequest();
-    }
+    /** @var User $user */
+    $user = User::factory()
+        ->has(UserProvider::factory())
+        ->createOne(['deleted_at' => $now]);
 
-    public function test_deletion_status_for_soft_deleted_user(): void
-    {
-        $this->withoutExceptionHandling();
-        $now = now()->toImmutable();
+    $payload = encrypt([
+        'id' => $user->ulid,
+        'provider' => $user->userProviders()->first()->name
+    ]);
 
-        /** @var User $user */
-        $user = User::factory()
-            ->has(UserProvider::factory())
-            ->createOne(['deleted_at' => $now]);
+    getJson(route('oauth.deletion-status', ['code' => $payload]))
+        ->assertOk()
+        ->assertJson(['data' => [
+            'userExists' => true,
+            'toBeDeletedAt' => $now->addDays(30)->toDateString()
+        ]]);
 
-        $payload = encrypt([
-            'id' => $user->ulid,
-            'provider' => $user->userProviders()->first()->name
-        ]);
+    $user->deleted_at = $now->subDays(10);
+    $user->save();
 
-        $this->getJson(route('oauth.deletion-status', ['code' => $payload]))
-            ->assertOk()
-            ->assertJson(['data' => [
-                'userExists' => true,
-                'toBeDeletedAt' => $now->addDays(30)->toDateString()
-            ]]);
+    getJson(route('oauth.deletion-status', ['code' => $payload]))
+        ->assertOk()
+        ->assertJson(['data' => [
+            'userExists' => true,
+            'toBeDeletedAt' => $now->addDays(20)->toDateString()
+        ]]);
+});
+test('deletion status with incorrect data in payload', function (): void {
+    $payload = encrypt([
+        'provider' => OauthProvider::GOOGLE
+    ]);
 
-        $user->deleted_at = $now->subDays(10);
-        $user->save();
-
-        $this->getJson(route('oauth.deletion-status', ['code' => $payload]))
-            ->assertOk()
-            ->assertJson(['data' => [
-                'userExists' => true,
-                'toBeDeletedAt' => $now->addDays(20)->toDateString()
-            ]]);
-    }
-
-    public function test_deletion_status_with_incorrect_data_in_payload(): void
-    {
-        $payload = encrypt([
-            'provider' => OauthProvider::GOOGLE
-        ]);
-
-        $this->getJson(route('oauth.deletion-status', ['code' => $payload]))
-            ->assertBadRequest();
-    }
-}
+    getJson(route('oauth.deletion-status', ['code' => $payload]))
+        ->assertBadRequest();
+});

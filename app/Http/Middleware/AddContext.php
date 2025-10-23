@@ -21,9 +21,6 @@ class AddContext
      */
     public function handle(Request $request, Closure $next): Response
     {
-        /** @var User|null $user */
-        $user = auth()->user();
-
         // Core request context
         Context::add([
             'trace_id' => Str::uuid()->toString(),
@@ -31,8 +28,8 @@ class AddContext
         ]);
 
         // User context (when authenticated)
-        Context::when($user, static fn (Repository $context) => $context->add([
-            'user_id' => $user->getKey(),
+        Context::when(auth()->check(), static fn (Repository $context) => $context->add([
+            'user_id' => auth()->id(),
         ]));
 
         return $next($request);
