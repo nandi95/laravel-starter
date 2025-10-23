@@ -40,6 +40,10 @@ class Image extends Model
         'storage_location'
     ];
 
+    /**
+     * @param  Builder<Image>  $query
+     * @return Builder<Image>
+     */
     public function scopeWithRelatedCount(Builder $query): Builder
     {
         if (is_null($query->getQuery()->columns)) {

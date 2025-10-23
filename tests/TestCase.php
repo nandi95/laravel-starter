@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests;
 
 use App\Enums\Role as RoleEnum;
-use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable as UserContract;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
@@ -18,9 +17,6 @@ abstract class TestCase extends BaseTestCase
 
     protected ?string $token = null;
 
-    /**
-     * @param  User  $user
-     */
     #[\Override]
     public function actingAs(UserContract $user, $guard = null): static
     {

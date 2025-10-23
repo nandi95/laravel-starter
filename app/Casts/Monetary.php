@@ -7,6 +7,9 @@ namespace App\Casts;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @implements CastsAttributes<float, int>
+ */
 class Monetary implements CastsAttributes
 {
     /**
