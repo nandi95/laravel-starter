@@ -44,9 +44,6 @@ jobs:
             -   name: Configure composer
                 run: composer config github-oauth.github.com ${{ secrets.COMPOSER_AUTH }}
 
-            -   name: Install Composer dependencies
-                run: composer install --prefer-dist --no-interaction --no-progress --no-ansi --no-scripts --optimize-autoloader
-
             -   name: Cache Composer packages
                 id: composer-cache
                 uses: actions/cache@v4
@@ -55,6 +52,10 @@ jobs:
                     key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
                     restore-keys: |
                         ${{ runner.os }}-php-
+
+            -   name: Install Composer dependencies
+                if: steps.composer-cache.outputs.cache-hit != 'true' # Skip if cache hit
+                run: composer install --prefer-dist --no-interaction --no-progress --no-ansi --optimize-autoloader
 
             -   name: Copy .env file
                 run: cp .env.example .env

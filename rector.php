@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Rector\Caching\ValueObject\Storage\FileCacheStorage;
 use Rector\CodingStyle\Rector\PostInc\PostIncDecToPreIncDecRector;
 use Rector\Config\RectorConfig;
 use Rector\Php81\Rector\Array_\FirstClassCallableRector;
@@ -49,4 +50,5 @@ return RectorConfig::configure()
         rectorPreset: true,
         phpunitCodeQuality: true
     )
-    ->withComposerBased(phpunit: true);
+    ->withComposerBased(phpunit: true)
+    ->withCache('./storage/rector/cache', FileCacheStorage::class);

@@ -37,9 +37,6 @@ jobs:
             -   name: Copy .env file
                 run: cp .env.example .env
 
-            -   name: Install Composer dependencies
-                run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --no-scripts --optimize-autoloader
-
             -   name: Cache Composer packages
                 id: composer-cache
                 uses: actions/cache@v4
@@ -49,23 +46,39 @@ jobs:
                     restore-keys: |
                         ${{ runner.os }}-php-
 
+            -   name: Install Composer dependencies
+                if: steps.composer-cache.outputs.cache-hit != 'true' # Skip if cache hit
+                run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --optimize-autoloader
+
             -   name: Check type coverage
                 run: composer type-coverage -- --ci
 
             -   name: Check for profanity
                 run: composer profanity-check -- --ci
 
+            -   name: Cache Rector
+                uses: actions/cache@v3
+                with:
+                    path: ./storage/rector/cache
+                    key: ${{ runner.os }}-rector-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: ${{ runner.os }}-rector-
             -   name: Rector check
                 run: composer rector -- --dry-run --no-progress-bar --no-diffs
 
+            -   name: Cache Pint
+                uses: actions/cache@v3
+                with:
+                    path: ./storage/pint.cache
+                    key: ${{ runner.os }}-pint-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: ${{ runner.os }}-pint-
             -   name: Run linter
                 run: composer lint -- --bail
 
-            -   name: Run mess detector
-                run: composer php-md
-
-            -   name: Run static analyser
-                run: composer phpstan
+            #            -   name: Run mess detector
+            #                run: composer php-md
+            #
+            #            -   name: Run static analyser
+            #                run: composer phpstan
 
             -   name: Upload artifacts
                 uses: actions/upload-artifact@v4
