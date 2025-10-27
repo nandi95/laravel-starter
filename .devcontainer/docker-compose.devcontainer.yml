@@ -1,0 +1,8 @@
+services:
+    api:
+        volumes:
+            # Override the default sync to ensure dev container has full access
+            - ..:/var/www/html:cached
+        command: sleep infinity
+        # Keep the container running for dev container
+        entrypoint: []

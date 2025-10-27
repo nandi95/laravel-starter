@@ -1,0 +1,79 @@
+{
+    "name": "Laravel Starter Dev Container",
+    "dockerComposeFile": [
+        "../compose.yml",
+        "docker-compose.devcontainer.yml"
+    ],
+    "service": "api",
+    "workspaceFolder": "/var/www/html",
+    "forwardPorts": [
+        80,
+        443,
+        5432,
+        6379,
+        1025,
+        8025
+    ],
+    "portsAttributes": {
+        "80": {
+            "label": "Application (HTTP)",
+            "onAutoForward": "notify"
+        },
+        "443": {
+            "label": "Application (HTTPS)",
+            "onAutoForward": "notify"
+        },
+        "5432": {
+            "label": "PostgreSQL"
+        },
+        "6379": {
+            "label": "Redis"
+        },
+        "1025": {
+            "label": "MailHog SMTP"
+        },
+        "8025": {
+            "label": "MailHog Web UI",
+            "onAutoForward": "openBrowser"
+        }
+    },
+    "customizations": {
+        "jetbrains": {
+            "settings": {
+                "com.intellij:app:EditorSettings.is_ensure_newline_at_eof": true,
+                "Git4Idea:app:Git-Application-Settings.staging_area_enabled": true,
+                "Git4Idea:app:Git-Application-Settings.combined_stashes_and_shelves_enabled": true,
+                "com.intellij:app:HttpConfigurable.use_proxy_pac": true
+            },
+            "plugins": [
+                "com.kalessil.phpStorm.phpInspectionsEA",
+                "com.laravel_idea.plugin",
+                "de.espend.idea.php.annotation"
+            ]
+        },
+        "vscode": {
+            "extensions": [
+                "bmewburn.vscode-intelephense-client",
+                "matthewpi.caddyfile-support",
+                "dbaeumer.vscode-eslint",
+                "VisualStudioExptTeam.vscodeintellicode",
+                "laravel.vscode-laravel",
+                "bmewburn.vscode-intelephense-client",
+                "SanderRonde.phpstan-vscode",
+                "MehediDracula.php-namespace-resolver",
+                "zobo.php-intellisense",
+                "bradlc.vscode-tailwindcss"
+            ]
+        }
+    },
+    "postCreateCommand": "cp /var/www/html/.devcontainer/.zshrc /root/.zshrc && echo 'source ~/.zshrc' > /root/.zprofile && composer install && php artisan key:generate",
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": true,
+            "installOhMyZsh": true,
+            "configureZshAsDefaultShell": true,
+            "username": "root"
+        },
+        "ghcr.io/devcontainers/features/git:1": {}
+    }
+}
