@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * @property User resource
+ * @property User $resource
  */
 class UserResource extends JsonResource
 {

@@ -2,51 +2,42 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\Http\Controllers\Auth;
-
-use App\Http\Controllers\Authentication\PasswordController;
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
-use PHPUnit\Framework\Attributes\CoversClass;
-use Tests\TestCase;
 
-#[CoversClass(PasswordController::class)]
-class PasswordResetTest extends TestCase
-{
-    public function test_reset_password_link_can_be_requested(): void
-    {
-        $user = User::factory()->create();
+use function Pest\Laravel\postJson;
+use function Pest\Laravel\withoutExceptionHandling;
 
-        $this->postJson(route('password.email'), ['email' => $user->email])
-            ->assertOk()
+test('reset password link can be requested', function (): void {
+    $user = User::factory()->create();
+
+    postJson(route('password.email'), ['email' => $user->email])
+        ->assertOk()
+        ->assertExactJson([
+            'message' => __('We have emailed your password reset link.'),
+        ]);
+});
+test('password can be reset with valid token', function (): void {
+    withoutExceptionHandling();
+    Notification::fake();
+
+    $user = User::factory()->create();
+
+    postJson(route('password.email'), ['email' => $user->email]);
+
+    Notification::assertSentTo($user, ResetPassword::class, function (object $notification) use ($user): bool {
+        postJson(route('password.store'), [
+            'token' => $notification->token,
+            'email' => $user->email,
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ])
             ->assertExactJson([
-                'message' => __('We have emailed your password reset link.'),
-            ]);
-    }
-
-    public function test_password_can_be_reset_with_valid_token(): void
-    {
-        $this->withoutExceptionHandling();
-        Notification::fake();
-
-        $user = User::factory()->create();
-
-        $this->postJson(route('password.email'), ['email' => $user->email]);
-
-        Notification::assertSentTo($user, ResetPassword::class, function (object $notification) use ($user): bool {
-            $this->postJson(route('password.store'), [
-                'token' => $notification->token,
-                'email' => $user->email,
-                'password' => 'password',
-                'password_confirmation' => 'password',
+                'message' => 'Your password has been reset.'
             ])
-                ->assertExactJson([
-                    'message' => 'Your password has been reset.'
-                ])
-                ->assertJsonMissingPath('errors');
+            ->assertJsonMissingPath('errors');
 
-            return true;
-        });
-    }
-}
+        return true;
+    });
+});

@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Jobs;
+namespace App\Console\Commands;
 
 use App\Models\User;
 use App\Notifications\UserHasNoVerification;
 use Illuminate\Console\Command;
 
-class StageUnverifiedUsersForDeletion extends Command
+class StageUnverifiedUsersForDeletionCommand extends Command
 {
     /**
      * The name and signature of the console command.

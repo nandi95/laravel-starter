@@ -27,7 +27,7 @@ class UserProviderFactory extends Factory
     {
         return [
             'provider_id' => Str::random(),
-            'user_id' => fn () => User::factory(),
+            'user_id' => User::factory(...),
             'name' => fake()->randomElement(OauthProvider::cases()),
         ];
     }

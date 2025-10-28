@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Models\User;
+use Carbon\CarbonImmutable;
+use Dedoc\Scramble\Scramble;
+use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\SecurityScheme;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -12,9 +16,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Route;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
@@ -53,6 +60,19 @@ class AppServiceProvider extends ServiceProvider
                 ? $rule->mixedCase()->uncompromised()->numbers()->symbols()->symbols()->letters()
                 : $rule;
         });
+
+        if (class_exists('Dedoc\Scramble\Scramble')) {
+            Scramble::configure()
+                ->withDocumentTransformers(function (OpenApi $openApi): void {
+                    $openApi->secure(
+                        SecurityScheme::apiKey('cookie', 'laravel_session')
+                            ->setDescription('The session cookie used for authentication. Requests from this page will be treated as authenticated without the cookie.'),
+                    );
+                })
+                ->routes(static fn (Route $route): bool => $route->getName() && !Str::startsWith($route->getName(), ['_boost']));
+        }
+
+        Date::use(CarbonImmutable::class);
     }
 
     private function createRateLimiters(): void

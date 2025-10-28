@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Facades\Storage;
@@ -39,13 +40,17 @@ class Image extends Model
         'storage_location'
     ];
 
-    public function scopeWithRelatedCount($query)
+    /**
+     * @param  Builder<Image>  $query
+     * @return Builder<Image>
+     */
+    public function scopeWithRelatedCount(Builder $query): Builder
     {
         if (is_null($query->getQuery()->columns)) {
             $query->select($query->getQuery()->from . '.*');
         }
 
-        $query->selectSub(function ($query): void {
+        $query->selectSub(function (\Illuminate\Database\Query\Builder $query): void {
             $query->selectRaw('count(*)')
                 ->from('imageables')
                 ->whereColumn('imageables.image_id', 'images.id');

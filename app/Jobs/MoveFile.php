@@ -20,8 +20,8 @@ class MoveFile implements ShouldQueue
      * Create a new job instance.
      */
     public function __construct(
-        public string $from,
-        public string $to,
+        public string $fromLocation,
+        public string $toLocation,
     ) {}
 
     /**
@@ -29,8 +29,8 @@ class MoveFile implements ShouldQueue
      */
     public function handle(): void
     {
-        Storage::move($this->from, $this->to);
+        Storage::move($this->fromLocation, $this->toLocation);
 
-        Log::info('Moved file in storage', ['from' => $this->from, 'to' => $this->to]);
+        Log::info('Moved file in storage', ['from' => $this->fromLocation, 'to' => $this->toLocation]);
     }
 }

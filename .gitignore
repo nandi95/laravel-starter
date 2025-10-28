@@ -23,3 +23,5 @@ yarn-error.log
 _ide_helper.php
 _ide_helper_models.php
 /storage/testing
+/storage/pint.cache
+/storage/rector

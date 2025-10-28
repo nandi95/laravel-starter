@@ -1,5 +1,6 @@
 {
     "preset": "laravel",
+    "cache-file": "storage/pint.cache",
     "rules": {
         "concat_space": {
             "spacing": "one"

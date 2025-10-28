@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphPivot;
 class Imageable extends MorphPivot
 {
     #[\Override]
-    protected function casts()
+    protected function casts(): array
     {
         return [
             'meta' => 'array'

@@ -84,30 +84,34 @@ class UserController extends Controller
      */
     public function updateAvatar(ImageStoreRequest $request): JsonResponse
     {
+        /** @var User $user */
+        $user = $request->user();
+
         Log::info('Updating user avatar', [
-            'user_id' => $request->user()->getKey()
+            'user_id' => $user->getKey()
         ]);
 
         $request->validateResolved();
+        $oldPath = $user->avatar;
 
-        if ($oldPath = $request->user()->avatar) {
+        if ($oldPath) {
             DeleteFile::dispatch($oldPath);
             Log::debug('Scheduled old avatar deletion', [
-                'user_id' => $request->user()->getKey(),
+                'user_id' => $user->getKey(),
                 'old_path' => $oldPath
             ]);
         }
 
-        $newPath = $request->getNewPath(AssetType::Image, $request->user());
+        $newPath = $request->getNewPath(AssetType::Image, $user);
         Log::debug('Moving new avatar file', [
-            'user_id' => $request->user()->getKey(),
+            'user_id' => $user->getKey(),
             'from_key' => $request->validated('key'),
             'to_path' => $newPath
         ]);
 
         MoveFile::dispatchSync($request->validated('key'), $newPath);
 
-        $request->user()->update(['avatar' => $newPath]);
+        $user->update(['avatar' => $newPath]);
 
         return response()->json(['data' => Storage::url($newPath)]);
     }

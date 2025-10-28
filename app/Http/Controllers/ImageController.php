@@ -30,7 +30,7 @@ class ImageController extends Controller
     /**
      * Update the image in storage.
      */
-    public function update(Request $request, Image $image)
+    public function update(Request $request, Image $image): ImageResource
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255']

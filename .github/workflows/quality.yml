@@ -1,58 +1,88 @@
 name: Quality Checks
 
 on:
-  pull_request:
-    types: [ ready_for_review, opened, synchronize, reopened ]
-    branches:
-      - main
-      - staging
-      - develop
+    push:
+        branches:
+            - main
+            - staging
+            - develop
+    pull_request:
+        types: [ ready_for_review, opened, synchronize, reopened ]
+        branches:
+            - main
+            - staging
+            - develop
 
 jobs:
-  lint:
-    if: github.event.pull_request.draft == false
-    name: Quality
-    runs-on: ubuntu-latest
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-      cancel-in-progress: true
-    steps:
-      - name: Setup PHP with tools
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: 8.4
-          tools: composer
+    lint:
+        if: github.event.pull_request.draft == false
+        name: Quality
+        runs-on: ubuntu-latest
+        concurrency:
+            group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+            cancel-in-progress: true
+        steps:
+            -   name: Setup PHP with tools
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: 8.4
+                    tools: composer
 
-      - name: Check out code
-        uses: actions/checkout@v5
+            -   name: Check out code
+                uses: actions/checkout@v5
 
-      - name: Configure composer
-        run: composer config github-oauth.github.com ${{ secrets.COMPOSER_AUTH }}
+            -   name: Configure composer
+                run: composer config github-oauth.github.com ${{ secrets.COMPOSER_AUTH }}
 
-      - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --no-scripts
+            -   name: Copy .env file
+                run: cp .env.example .env
 
-      - name: Cache Composer packages
-        id: composer-cache
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-php-
+            -   name: Cache Composer packages
+                id: composer-cache
+                uses: actions/cache@v4
+                with:
+                    path: vendor
+                    key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: |
+                        ${{ runner.os }}-php-
 
-      - name: Run code sniffer
-        run: composer sniff
+            -   name: Install Composer dependencies
+                if: steps.composer-cache.outputs.cache-hit != 'true' # Skip if cache hit
+                run: composer install --prefer-dist --no-interaction --no-interaction --no-ansi --optimize-autoloader
 
-      - name: Run mess detector
-        run: composer php-md
+            -   name: Check type coverage
+                run: composer type-coverage -- --ci
 
-      - name: Run static analyser
-        run: composer phpstan
+            -   name: Check for profanity
+                run: composer profanity-check -- --ci
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: Logs
-          path: ./storage/logs
+            -   name: Cache Rector
+                uses: actions/cache@v3
+                with:
+                    path: ./storage/rector/cache
+                    key: ${{ runner.os }}-rector-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: ${{ runner.os }}-rector-
+            -   name: Rector check
+                run: composer rector -- --dry-run --no-progress-bar --no-diffs
+
+            -   name: Cache Pint
+                uses: actions/cache@v3
+                with:
+                    path: ./storage/pint.cache
+                    key: ${{ runner.os }}-pint-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: ${{ runner.os }}-pint-
+            -   name: Run linter
+                run: composer lint -- --bail
+
+            #            -   name: Run mess detector
+            #                run: composer php-md
+            #
+            #            -   name: Run static analyser
+            #                run: composer phpstan
+
+            -   name: Upload artifacts
+                uses: actions/upload-artifact@v4
+                if: failure()
+                with:
+                    name: Logs
+                    path: ./storage/logs
